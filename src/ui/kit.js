@@ -24,23 +24,13 @@ const NAV = [
   { path: '/profile', icon: 'settings', key: 'nav.profile' },
 ];
 
-/* Отдельное меню для учителя */
-const TEACHER_NAV = [
-  { path: '/teacher', icon: 'users', key: 'nav.teacher' },
-  { path: '/admin', icon: 'shield', key: 'admin.title' },
-  { path: '/profile', icon: 'settings', key: 'nav.profile' },
-];
-
 export function renderRail(path) {
   const p = getProfile();
-  const teacher = getSettings().role === 'teacher';
-  const items = teacher ? TEACHER_NAV : NAV;
   const section = '/' + (path.split('/')[1] || '');
-  const active = (n) => (n.path === '/' ? path === '/'
-    : section === n.path || (teacher && n.path === '/teacher' && path === '/') || (n.path === '/topics' && (section === '/topic' || section === '/practice')));
+  const active = (n) => (n.path === '/' ? path === '/' : section === n.path || (n.path === '/topics' && (section === '/topic' || section === '/practice')));
   return `
     <a class="rail-logo" href="#/" aria-label="NASstudy"><img class="logo-img" src="logo-bear.png" alt=""></a>
-    ${items.map((n) => `<a class="nav ${active(n) ? 'on' : ''} ${n.extra ? 'nav-extra' : ''}" href="#${n.path}" data-tip="${esc(t(n.key))}" aria-label="${esc(t(n.key))}"${active(n) ? ' aria-current="page"' : ''}>${icon(n.icon, 22)}</a>`).join('')}
+    ${NAV.map((n) => `<a class="nav ${active(n) ? 'on' : ''} ${n.extra ? 'nav-extra' : ''}" href="#${n.path}" data-tip="${esc(t(n.key))}" aria-label="${esc(t(n.key))}"${active(n) ? ' aria-current="page"' : ''}>${icon(n.icon, 22)}</a>`).join('')}
     <div class="rail-spacer"></div>
     <a class="rail-avatar" href="#/profile" aria-label="${esc(t('nav.profile'))}">${esc(initials(p.name || 'NS'))}</a>`;
 }
@@ -52,8 +42,8 @@ export function tools() {
   const s = getSettings();
   return `
     <div class="top-tools">
-      ${s.role !== 'teacher' && p.streakDays > 0 ? `<span class="streak-pill" title="${esc(tf('dash.streak', { n: p.streakDays }))}">${icon('flame', 18)} ${p.streakDays}</span>` : ''}
-      ${s.role !== 'teacher' ? `<a class="coin-pill" href="#/wallet" title="${esc(t('nav.wallet'))}">${coin(26)}<span id="coinCount">${fmt(p.coins)}</span></a>` : ''}
+      ${p.streakDays > 0 ? `<span class="streak-pill" title="${esc(tf('dash.streak', { n: p.streakDays }))}">${icon('flame', 18)} ${p.streakDays}</span>` : ''}
+      <a class="coin-pill" href="#/wallet" title="${esc(t('nav.wallet'))}">${coin(26)}<span id="coinCount">${fmt(p.coins)}</span></a>
       <div class="lang-pill" data-lang="${s.lang}" role="group" aria-label="${esc(t('lang.label'))}">
         <span class="thumb"></span>
         ${LANGS.map((l) => `<button data-act="lang" data-id="${l.id}" class="${s.lang === l.id ? 'on' : ''}" aria-pressed="${s.lang === l.id}">${l.label}</button>`).join('')}

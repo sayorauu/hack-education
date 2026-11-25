@@ -50,7 +50,6 @@ const defaultState = () => ({
     theme: matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light',
     aiMode: 'auto',
     localModel: 'lite',
-    role: 'student',       // 'student' | 'teacher'
   },
 });
 

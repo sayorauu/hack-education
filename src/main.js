@@ -16,7 +16,6 @@ import { renderTutor, registerTutorActions, seedTutorQuestion, flushPending } fr
 import { renderProfile, registerProfileActions, bindChipRadios } from './ui/profile.js';
 import { showOnboarding, registerOnboardingActions } from './ui/onboarding.js';
 import { renderAdmin, registerAdminActions } from './ui/admin.js';
-import { renderTeacher, registerTeacherActions } from './ui/teacher.js';
 
 const main = document.getElementById('main');
 const rail = document.getElementById('rail');
@@ -30,8 +29,7 @@ function parseHash() {
 function view(path, params) {
   const seg = path.split('/').filter(Boolean);
   switch (seg[0]) {
-    case undefined: return getSettings().role === 'teacher' ? renderTeacher(params) : renderDashboard();
-    case 'teacher': return renderTeacher(params);
+    case undefined: return renderDashboard();
     case 'topics': return renderTopics(params);
     case 'topic': return renderTopic(seg[1]);
     case 'practice': return renderPractice(seg[1]);
@@ -84,7 +82,6 @@ registerTutorActions(render);
 registerProfileActions(render);
 registerOnboardingActions(action, render);
 registerAdminActions(render);
-registerTeacherActions(render);
 
 initDelegation(document.body);
 bindTopicSearch(document.body);
@@ -103,9 +100,7 @@ document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal
 window.addEventListener('hashchange', render);
 
 render();
-/* Учитель (или ссылка с отчётом ученика) — без анкеты ученика */
-const isTeacher = getSettings().role === 'teacher' || location.hash.startsWith('#/teacher');
-if (!getProfile().onboarded && !isTeacher) showOnboarding(render);
+if (!getProfile().onboarded) showOnboarding(render);
 
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
   navigator.serviceWorker.register('sw.js').catch(() => { /* офлайн-режим просто не включится */ });
