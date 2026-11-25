@@ -30,7 +30,8 @@ function wizardHtml() {
       <div class="ob-choices two">
         ${LANGS.map((l) => `<button type="button" class="ob-choice ${W.lang === l.id ? 'on' : ''}" data-act="ob-lang" data-id="${l.id}">
           <span class="ob-big">${LANG_NAMES[l.id][1]}</span><span>${LANG_NAMES[l.id][0]}</span></button>`).join('')}
-      </div>`;
+      </div>
+      <button type="button" class="ob-teacher" data-act="ob-teacher">${icon('users', 16)} ${t('ob.teacher')}</button>`;
   } else if (W.step === 1) {
     body = `
       <h2>${t('ob.qName')}</h2>
@@ -93,6 +94,12 @@ export function registerOnboardingActions(action, rerender) {
     rerender();               // интерфейс за окном сразу переходит на выбранный язык
     setTimeout(() => go(1), 180); // даём увидеть подсветку выбора
     paintWizard();
+  });
+  action('ob-teacher', () => {
+    update((s) => { s.settings.role = 'teacher'; });
+    closeModal();
+    location.hash = '#/teacher';
+    rerender();
   });
   action('ob-next', () => { if (W.name.trim().length >= 2) go(1); });
   action('ob-back', () => go(-1));

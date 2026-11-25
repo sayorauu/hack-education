@@ -7,7 +7,7 @@
  * интернет бывает нестабильным или почасовым.
  */
 
-const CACHE = 'nasstudy-v32';
+const CACHE = 'nasstudy-v33';
 
 const ASSETS = [
   './',
@@ -29,6 +29,8 @@ const ASSETS = [
   'src/engine/mastery.js',
   'src/engine/tutor.js',
   'src/engine/localllm.js',
+  'src/engine/qr.js',
+  'src/engine/report.js',
   'src/ui/dom.js',
   'src/ui/icons.js',
   'src/ui/kit.js',
@@ -38,6 +40,7 @@ const ASSETS = [
   'src/ui/leaderboard.js',
   'src/ui/pisa.js',
   'src/ui/wallet.js',
+  'src/ui/teacher.js',
   'src/ui/tutor.js',
   'src/ui/profile.js',
   'src/ui/onboarding.js',
