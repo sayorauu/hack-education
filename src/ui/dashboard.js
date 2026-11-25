@@ -49,7 +49,7 @@ function progressCards() {
             <div class="hero-lbl">${t('dash.solved')}</div>
             <div class="hero-big">${solvedIds.size}<span>/${ITEMS.length}</span></div>
           </div>
-          <div class="ring ring-light" style="--p:${Math.max(2, sharePct)}"><b>${sharePct}%</b></div>
+          <div class="pring pring-light" style="--p:${Math.max(2, sharePct)}"><b>${sharePct}%</b></div>
         </div>
         <div class="hero-bar"><i style="width:${Math.max(2, sharePct)}%"></i></div>
         <div class="hero-chips">
@@ -81,14 +81,14 @@ function progressCards() {
           <div class="top-row"><span class="sic">${icon(s.icon, 22)}</span><span class="num">${started}/${list.length}</span></div>
           <h3>${esc(loc(s))}</h3>
           <div class="pct">${tf('dash.startedTopics', { n: started, m: list.length })}</div>
-          <div class="ring" style="--p:${Math.max(2, m)}"><b>${m}%</b></div>
+          <div class="pring" style="--p:${Math.max(2, m)}"><b>${m}%</b></div>
         </a>`;
       }).join('')}
       <a class="pc pc-subj t-lilac" href="#/pisa">
         <div class="top-row"><span class="sic">${icon('target', 22)}</span><span class="num">${last ? last.total : '—'}</span></div>
         <h3>PISA</h3>
         <div class="pct">${last ? `${t('dash.pisaLast')}: ${last.total}` : t('dash.pisaNone')}</div>
-        <div class="ring" style="--p:${Math.max(2, pisaP)}"><b>${last ? last.total : '—'}</b></div>
+        <div class="pring" style="--p:${Math.max(2, pisaP)}"><b>${last ? last.total : '—'}</b></div>
       </a>
     </div>`;
 }

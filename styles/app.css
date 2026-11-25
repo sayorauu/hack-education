@@ -499,7 +499,8 @@ html[data-vt='lang']::view-transition-new(root) { animation: langIn 0.46s var(--
 .lang-pill { height: 40px; background: var(--soft); border: 0; border-radius: 12px; }
 .lang-pill .thumb { background: var(--app); height: 32px; box-shadow: 0 1px 2px rgba(20, 24, 40, 0.08), 0 4px 10px -4px rgba(20, 24, 40, 0.18); }
 .lang-pill button.on { color: var(--text); }
-[data-theme='dark'] .lang-pill .thumb { background: var(--line); box-shadow: none; }
+[data-theme='dark'] .lang-pill .thumb { background: var(--accent); box-shadow: 0 4px 12px -4px rgba(91, 91, 214, 0.8); }
+[data-theme='dark'] .lang-pill button.on { color: #fff; }
 .theme-toggle { width: 66px; height: 36px; }
 .theme-toggle .knob { width: 26px; height: 26px; top: 5px; left: 5px; }
 [data-theme='dark'] .theme-toggle .knob { transform: translateX(30px) rotate(360deg); }
@@ -777,6 +778,7 @@ html[data-vt='lang']::view-transition-new(root) { animation: langIn 0.46s var(--
    Язык и тема на телефоне меняются в «Настройках», а не в шапке. */
 .mobile-only { display: none; }
 .menu-links { display: grid; gap: 10px; margin-bottom: 22px; }
+.menu-links.mobile-only { display: none; }
 .menu-links a { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto auto; gap: 14px; align-items: center; padding: 12px 16px; border-radius: 20px; background: var(--soft); color: var(--dim); }
 .menu-links b { color: var(--text); font-weight: 600; }
 .ml-ic { width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center; }
@@ -789,7 +791,7 @@ html[data-vt='lang']::view-transition-new(root) { animation: langIn 0.46s var(--
   .top-tools { position: absolute; top: 20px; right: 16px; }
   .main { position: relative; }
   .top h1 { padding-right: 96px; }
-  .mobile-only { display: grid; }
+  .mobile-only, .menu-links.mobile-only { display: grid; }
   .act-row > span:nth-child(3) { display: none; }
 }
 
@@ -826,15 +828,15 @@ html[lang='kk'] .glyph.num i::after { content: ' сын'; }
 .hchip b { font-weight: 700; }
 
 /* Кольцо освоения */
-.ring { --sz: 92px; width: var(--sz); height: var(--sz); border-radius: 50%; margin-top: auto; position: relative; display: grid; place-items: center;
+.pring { --sz: 92px; width: var(--sz); height: var(--sz); border-radius: 50%; margin-top: auto; position: relative; display: grid; place-items: center;
   background: conic-gradient(var(--ring, currentColor) calc(var(--p) * 1%), color-mix(in srgb, var(--ring, currentColor) 16%, transparent) 0); }
-.ring::before { content: ''; position: absolute; inset: 11px; border-radius: 50%; background: var(--ring-hole, var(--app)); box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.06); }
-.ring b { position: relative; font-size: 18px; font-weight: 700; letter-spacing: -0.02em; color: var(--text); }
-.ring-light { --sz: 76px; margin-top: 0; --ring: #fff; --ring-hole: #6f5ee3; flex: none; }
-.ring-light::before { box-shadow: none; }
-[data-theme='dark'] .ring-light { --ring-hole: #5d50cf; }
-.ring-light b { color: #fff; font-size: 16px; }
-.pc-subj .ring { align-self: flex-start; }
+.pring::before { content: ''; position: absolute; inset: 11px; border-radius: 50%; background: var(--ring-hole, var(--app)); box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.06); }
+.pring b { position: relative; font-size: 18px; font-weight: 700; letter-spacing: -0.02em; color: var(--text); }
+.pring-light { --sz: 76px; margin-top: 0; --ring: #fff; --ring-hole: #6f5ee3; flex: none; }
+.pring-light::before { box-shadow: none; }
+[data-theme='dark'] .pring-light { --ring-hole: #5d50cf; }
+.pring-light b { color: #fff; font-size: 16px; }
+.pc-subj .pring { align-self: flex-start; }
 
 /* Карточка недели */
 .pc-week { width: 250px; background: var(--soft); border: 1px solid var(--line); --c2: var(--lilac-pie2); }
@@ -853,4 +855,4 @@ html[lang='kk'] .glyph.num i::after { content: ' сын'; }
 
 [data-theme='dark'] .pc-hero { background: linear-gradient(145deg, #4b4bc6 0%, #6a4fd0 55%, #8459dc 100%); }
 [data-theme='dark'] .pc-week { background: var(--soft); }
-[data-theme='dark'] .ring::before { box-shadow: none; }
+[data-theme='dark'] .pring::before { box-shadow: none; }
