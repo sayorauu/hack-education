@@ -806,3 +806,51 @@ html[lang='kk'] .glyph.num i::after { content: ' сын'; }
 .sf-ic { box-shadow: 0 1px 2px rgba(20, 24, 40, 0.06); }
 .sf.t-lilac .sf-ic { color: var(--lilac-ink); } .sf.t-mint .sf-ic { color: var(--mint-ink); }
 .sf.t-sky .sf-ic { color: var(--sky-ink); } .sf.t-cream .sf-ic { color: var(--cream-ink); }
+
+/* ─── «Мой прогресс»: новые карточки ──────────────────────────────────── */
+.pc { position: relative; overflow: hidden; isolation: isolate; }
+.pc::before { content: ''; position: absolute; z-index: -1; width: 180px; height: 180px; border-radius: 50%; right: -70px; top: -70px; background: var(--c2, rgba(255,255,255,.4)); opacity: 0.55; }
+
+/* Главная карточка */
+.pc-hero { width: 300px; color: #fff; background: linear-gradient(145deg, #5b5bd6 0%, #7b5ce6 55%, #9a6bf0 100%); box-shadow: 0 24px 50px -24px rgba(91, 91, 214, 0.75); }
+.pc-hero::before { background: rgba(255, 255, 255, 0.12); opacity: 1; width: 230px; height: 230px; right: -80px; top: auto; bottom: -120px; }
+.pc-hero::after { content: ''; position: absolute; z-index: -1; width: 120px; height: 120px; border-radius: 50%; left: -46px; top: -50px; background: rgba(255, 255, 255, 0.08); }
+.hero-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+.hero-lbl { font-size: 13px; opacity: 0.8; }
+.hero-big { font-size: 44px; font-weight: 700; letter-spacing: -0.03em; line-height: 1.05; margin-top: 6px; }
+.hero-big span { font-size: 22px; opacity: 0.6; font-weight: 600; }
+.hero-bar { height: 8px; border-radius: 8px; background: rgba(255, 255, 255, 0.2); margin-top: auto; overflow: hidden; }
+.hero-bar i { display: block; height: 100%; border-radius: 8px; background: #fff; box-shadow: 0 0 12px rgba(255, 255, 255, 0.6); }
+.hero-chips { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
+.hchip { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 12px; background: rgba(255, 255, 255, 0.16); backdrop-filter: blur(6px); font-size: 13px; }
+.hchip b { font-weight: 700; }
+
+/* Кольцо освоения */
+.ring { --sz: 92px; width: var(--sz); height: var(--sz); border-radius: 50%; margin-top: auto; position: relative; display: grid; place-items: center;
+  background: conic-gradient(var(--ring, currentColor) calc(var(--p) * 1%), color-mix(in srgb, var(--ring, currentColor) 16%, transparent) 0); }
+.ring::before { content: ''; position: absolute; inset: 11px; border-radius: 50%; background: var(--ring-hole, var(--app)); box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.06); }
+.ring b { position: relative; font-size: 18px; font-weight: 700; letter-spacing: -0.02em; color: var(--text); }
+.ring-light { --sz: 76px; margin-top: 0; --ring: #fff; --ring-hole: #6f5ee3; flex: none; }
+.ring-light::before { box-shadow: none; }
+[data-theme='dark'] .ring-light { --ring-hole: #5d50cf; }
+.ring-light b { color: #fff; font-size: 16px; }
+.pc-subj .ring { align-self: flex-start; }
+
+/* Карточка недели */
+.pc-week { width: 250px; background: var(--soft); border: 1px solid var(--line); --c2: var(--lilac-pie2); }
+.week-head { display: flex; justify-content: space-between; align-items: flex-start; }
+.week-head .sic { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; background: var(--accent); color: #fff; }
+.week-head .num { font-size: 26px; font-weight: 700; letter-spacing: -0.02em; color: var(--accent); }
+.pc-week h3 { font-size: 18px; font-weight: 600; margin-top: 18px; }
+.pc-week .pct { font-size: 13px; color: var(--dim); margin-top: 2px; }
+.week-bars { margin-top: auto; height: 96px; display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; align-items: end; }
+.wb { height: 100%; display: grid; grid-template-rows: 1fr auto; gap: 6px; justify-items: center; }
+.wb i { align-self: end; width: 100%; max-width: 22px; border-radius: 7px; background: color-mix(in srgb, var(--accent) 35%, transparent); transition: height 0.6s var(--ease); }
+.wb.now i { background: linear-gradient(180deg, #9a6bf0, var(--accent)); box-shadow: 0 6px 14px -6px var(--accent); }
+.wb.zero i { background: var(--line); }
+.wb em { font-style: normal; font-size: 11px; color: var(--faint); }
+.wb.now em { color: var(--accent); font-weight: 700; }
+
+[data-theme='dark'] .pc-hero { background: linear-gradient(145deg, #4b4bc6 0%, #6a4fd0 55%, #8459dc 100%); }
+[data-theme='dark'] .pc-week { background: var(--soft); }
+[data-theme='dark'] .ring::before { box-shadow: none; }

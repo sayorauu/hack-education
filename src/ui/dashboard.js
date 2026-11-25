@@ -31,32 +31,64 @@ function progressCards() {
   const share = solvedIds.size / ITEMS.length;
   const last = p.pisa[0];
   const pisaP = last ? Math.round(((last.total - 300) / 350) * 100) : 0;
+  const sharePct = Math.round(share * 100);
+
+  // Неделя: сколько заданий решено в каждый из последних 7 дней
+  const today = startOfDay(Date.now());
+  const days = Array.from({ length: 7 }, (_, i) => today - (6 - i) * DAY);
+  const perDay = days.map((d) => p.history.filter((h) => startOfDay(h.ts) === d).length);
+  const maxDay = Math.max(1, ...perDay);
+  const weekTotal = perDay.reduce((a, b) => a + b, 0);
+  const wds = WEEKDAYS[lang()];
+
   return `
     <div class="pcards" id="pcards">
-      <article class="pc pc-total">
-        <div class="big">${solvedIds.size}<span>/${ITEMS.length}</span></div>
-        <div class="lbl">${t('dash.solved')}</div>
-        <div class="row">
-          <div><div class="big" style="font-size:26px">${acc}</div><div class="lbl">${t('dash.accuracy')}</div></div>
-          <span class="emoji" aria-hidden="true">🤓</span>
+      <article class="pc pc-hero">
+        <div class="hero-top">
+          <div>
+            <div class="hero-lbl">${t('dash.solved')}</div>
+            <div class="hero-big">${solvedIds.size}<span>/${ITEMS.length}</span></div>
+          </div>
+          <div class="ring ring-light" style="--p:${Math.max(2, sharePct)}"><b>${sharePct}%</b></div>
         </div>
-        <div class="slider" style="margin-top:auto"><i style="width:${Math.max(3, Math.round(share * 100))}%"></i></div>
+        <div class="hero-bar"><i style="width:${Math.max(2, sharePct)}%"></i></div>
+        <div class="hero-chips">
+          <span class="hchip">${icon('check', 15)}<b>${acc}%</b> ${t('dash.accShort')}</span>
+          <span class="hchip">${icon('flame', 15)}<b>${p.streakDays}</b> ${t('dash.daysShort')}</span>
+        </div>
       </article>
+
+      <article class="pc pc-week">
+        <div class="week-head">
+          <span class="sic">${icon('calendar', 20)}</span>
+          <span class="num">${weekTotal}</span>
+        </div>
+        <h3>${t('dash.week')}</h3>
+        <div class="pct">${tf('dash.weekSub', { n: weekTotal })}</div>
+        <div class="week-bars">
+          ${perDay.map((n, i) => {
+            const wd = wds[(new Date(days[i]).getDay() + 6) % 7];
+            return `<span class="wb ${i === 6 ? 'now' : ''} ${n ? '' : 'zero'}" title="${n}"><i style="height:${n ? Math.max(14, Math.round((n / maxDay) * 100)) : 6}%"></i><em>${wd}</em></span>`;
+          }).join('')}
+        </div>
+      </article>
+
       ${SUBJECTS.map((s) => {
         const m = Math.round(subjectMastery(s.id) * 100);
-        const n = TOPICS.filter((tp) => tp.subject === s.id).length;
+        const list = TOPICS.filter((tp) => tp.subject === s.id);
+        const started = list.filter((tp) => p.mastery[tp.id]).length;
         return `<a class="pc pc-subj t-${s.tint}" href="#/topics?s=${s.id}">
-          <div class="top-row"><span class="sic">${icon(s.icon, 22)}</span><span class="num">#${n}</span></div>
+          <div class="top-row"><span class="sic">${icon(s.icon, 22)}</span><span class="num">${started}/${list.length}</span></div>
           <h3>${esc(loc(s))}</h3>
-          <div class="pct">${m}% ${t('dash.mastery')}</div>
-          <div class="pie" style="--p:${Math.max(4, m)}"></div>
+          <div class="pct">${tf('dash.startedTopics', { n: started, m: list.length })}</div>
+          <div class="ring" style="--p:${Math.max(2, m)}"><b>${m}%</b></div>
         </a>`;
       }).join('')}
       <a class="pc pc-subj t-lilac" href="#/pisa">
         <div class="top-row"><span class="sic">${icon('target', 22)}</span><span class="num">${last ? last.total : '—'}</span></div>
         <h3>PISA</h3>
         <div class="pct">${last ? `${t('dash.pisaLast')}: ${last.total}` : t('dash.pisaNone')}</div>
-        <div class="pie" style="--p:${Math.max(4, pisaP)}"></div>
+        <div class="ring" style="--p:${Math.max(2, pisaP)}"><b>${last ? last.total : '—'}</b></div>
       </a>
     </div>`;
 }

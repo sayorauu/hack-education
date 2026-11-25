@@ -11,7 +11,7 @@ export const ru = {
   'dash.topicsCount': '{n} тем', 'dash.mastery': 'освоено', 'dash.activity': 'Активность', 'dash.findUpdate': 'Поиск…',
   'dash.topics': 'Рекомендуемые темы', 'dash.findTopic': 'Найти тему', 'dash.schedule': 'Календарь', 'dash.upcoming': 'План на сегодня',
   'dash.tasks': '{n} задания', 'dash.studying': '+{n}', 'dash.pisaNone': 'Ещё не пройден', 'dash.pisaLast': 'Последний результат',
-  'dash.streak': '{n} дней подряд', 'dash.noActivity': 'Пока ничего нет',
+  'dash.streak': '{n} дней подряд', 'dash.accShort': 'точность', 'dash.daysShort': 'дн. подряд', 'dash.week': 'Эта неделя', 'dash.weekSub': '{n} заданий за 7 дней', 'dash.startedTopics': 'Начато {n} из {m} тем', 'dash.noActivity': 'Пока ничего нет',
   'legend.practice': 'Практика', 'legend.test': 'Тест', 'legend.ai': 'Урок с Капи',
   'feed.solved': 'решил(а) задание', 'feed.streak': 'продлил(а) серию', 'feed.mastered': 'освоил(а) тему', 'feed.pisa': 'прошёл(ла) PISA',
   'feed.youCorrect': 'ответ верный', 'feed.youWrong': 'стоит повторить', 'feed.you': 'Ты',

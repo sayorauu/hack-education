@@ -11,7 +11,7 @@ export const kk = {
   'dash.topicsCount': '{n} тақырып', 'dash.mastery': 'меңгерілді', 'dash.activity': 'Белсенділік', 'dash.findUpdate': 'Іздеу…',
   'dash.topics': 'Ұсынылған тақырыптар', 'dash.findTopic': 'Тақырып іздеу', 'dash.schedule': 'Күнтізбе', 'dash.upcoming': 'Бүгінгі жоспар',
   'dash.tasks': '{n} тапсырма', 'dash.studying': '+{n}', 'dash.pisaNone': 'Әлі тапсырылмады', 'dash.pisaLast': 'Соңғы нәтиже',
-  'dash.streak': '{n} күн қатарынан', 'dash.noActivity': 'Әзірге ештеңе жоқ',
+  'dash.streak': '{n} күн қатарынан', 'dash.accShort': 'дәлдік', 'dash.daysShort': 'күн қатар', 'dash.week': 'Осы апта', 'dash.weekSub': '7 күнде {n} тапсырма', 'dash.startedTopics': '{m} тақырыптың {n}-і басталды', 'dash.noActivity': 'Әзірге ештеңе жоқ',
   'legend.practice': 'Жаттығу', 'legend.test': 'Тест', 'legend.ai': 'Капимен сабақ',
   'feed.solved': 'тапсырма шешті', 'feed.streak': 'серияны жалғастырды', 'feed.mastered': 'тақырыпты меңгерді', 'feed.pisa': 'PISA тестін тапсырды',
   'feed.youCorrect': 'дұрыс жауап берді', 'feed.youWrong': 'қайта көру керек', 'feed.you': 'Сен',
