@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="kk">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>NASstudy — 7–9 сыныптарға арналған AI-ұстаз</title>
+  <meta name="description" content="Математика (7–9 сынып) және оқу сауаттылығы: тақырыптар, жаттығулар, PISA сынақ тесті және Капи AI-ұстазы.">
+  <meta name="theme-color" content="#eceef4">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="logo-bear.png" type="image/png">
+  <link rel="apple-touch-icon" href="logo-bear.png">
+  <link rel="stylesheet" href="styles/app.css">
+  <script>
+    /* Тема ставится до отрисовки, чтобы не было вспышки светлой темы. */
+    try {
+      var s = JSON.parse(localStorage.getItem('nasstudy.v2') || 'null');
+      var th = (s && s.settings && s.settings.theme) || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      document.documentElement.dataset.theme = th;
+      if (s && s.settings && s.settings.lang) document.documentElement.lang = s.settings.lang;
+    } catch (e) {}
+  </script>
+</head>
+<body>
+  <div class="app">
+    <nav class="rail" id="rail" aria-label="Menu"></nav>
+    <main class="main" id="main"></main>
+  </div>
+  <div id="modalRoot"></div>
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>

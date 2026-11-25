@@ -1,0 +1,16 @@
+{
+  "name": "NASstudy — AI-ұстаз 7–9 сынып",
+  "short_name": "NASstudy",
+  "description": "Находит настоящую причину пробела в знаниях, строит персональный план подготовки и работает без интернета.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#eceef4",
+  "theme_color": "#eceef4",
+  "lang": "kk",
+  "categories": ["education"],
+  "icons": [
+    { "src": "logo-bear.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}

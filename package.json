@@ -1,0 +1,9 @@
+{
+  "name": "aqyl",
+  "private": true,
+  "type": "module",
+  "description": "AQYL — AI-репетитор для школ Казахстана. Статический сайт без сборки + серверные функции Vercel в /api.",
+  "engines": {
+    "node": ">=18"
+  }
+}
