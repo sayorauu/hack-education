@@ -39,7 +39,8 @@ function view(path, params) {
     case 'profile': return renderProfile();
     case 'admin': return renderAdmin();
     case 'tutor':
-      if (params.get('q')) seedTutorQuestion(params.get('q'));
+      if (params.get('ask')) seedTutorQuestion(params.get('ask'), true);
+      else if (params.get('q')) seedTutorQuestion(params.get('q'));
       return renderTutor();
     default: return renderDashboard();
   }

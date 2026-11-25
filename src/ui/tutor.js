@@ -30,7 +30,8 @@ let pending = null;
 let cloudDown = false;
 const cached = { lite: null, smart: null };
 
-export function seedTutorQuestion(q) { if (q) pending = q; }
+let pendingRaw = false; // true — вопрос уходит как есть, без «Объясни тему»
+export function seedTutorQuestion(q, raw = false) { if (q) { pending = q; pendingRaw = raw; } }
 
 /* ─── Панель нейросети на устройстве ──────────────────────────────────── */
 
@@ -151,8 +152,8 @@ async function ask(text, rerender) {
 export function flushPending(rerender) {
   if (!pending || busy) return;
   const q = pending; pending = null;
-  if (location.hash.includes('?q=')) history.replaceState(null, '', '#/tutor');
-  ask(tf('tutor.explainTopic', { q }), rerender);
+  if (location.hash.includes('?')) history.replaceState(null, '', '#/tutor');
+  ask(pendingRaw ? q : tf('tutor.explainTopic', { q }), rerender);
 }
 
 export function registerTutorActions(rerender) {

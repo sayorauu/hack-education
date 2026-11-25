@@ -2,7 +2,7 @@ import { icon } from './icons.js';
 import { t, tf, loc } from '../i18n.js';
 import { getProfile, recordAttempt, awardCoins, COINS } from '../state.js';
 import { TOPIC_BY_ID, ITEMS_BY_TOPIC, PASSAGES, TOPICS } from '../data/curriculum.js';
-import { header, esc, coinBurst, subjName } from './kit.js';
+import { header, esc, coinBurst, subjName, openModal, closeModal } from './kit.js';
 import { action, toast } from './dom.js';
 
 let S = null; // текущая сессия практики
@@ -18,8 +18,36 @@ export function passageHtml(key) {
   const body = ps.table
     ? `<table class="ptable"><thead><tr>${ps.table.head.map((h) => `<th>${esc(loc(h))}</th>`).join('')}</tr></thead>
         <tbody>${ps.table.rows.map((r) => `<tr>${r.map((c) => `<td>${esc(loc(c))}</td>`).join('')}</tr>`).join('')}</tbody></table>`
-    : `<p>${esc(loc(ps.text))}</p>`;
-  return `<aside class="passage"><p class="note" style="margin-bottom:6px">${t('pr.text')}</p><h3>${esc(loc(ps.title))}</h3>${body}</aside>`;
+    : `<p class="pw-text">${wordSpans(loc(ps.text), key)}</p>`;
+  const tip = ps.table ? '' : `<p class="pw-tip">${icon('hint', 14)} ${t('word.tip')}</p>`;
+  return `<aside class="passage"><p class="note" style="margin-bottom:6px">${t('pr.text')}</p><h3>${esc(loc(ps.title))}</h3>${body}${tip}</aside>`;
+}
+
+/* ─── «Нажми на слово — Капи объяснит» ────────────────────────────────── */
+
+// Слово: буквы (кириллица, в т. ч. казахские, и латиница), внутри — дефис или апостроф
+const WORD_RE = /[A-Za-zА-Яа-яЁёӘәҒғҚқҢңӨөҰұҮүҺһІі]+(?:[-'’][A-Za-zА-Яа-яЁёӘәҒғҚқҢңӨөҰұҮүҺһІі]+)*/g;
+
+function wordSpans(text, key) {
+  let out = '', last = 0;
+  for (const m of text.matchAll(WORD_RE)) {
+    out += esc(text.slice(last, m.index));
+    const w = m[0];
+    out += w.length < 2 ? esc(w) : `<span class="pw" role="button" tabindex="0" data-act="word" data-w="${esc(w)}" data-p="${esc(key)}">${esc(w)}</span>`;
+    last = m.index + w.length;
+  }
+  return out + esc(text.slice(last));
+}
+
+/** Предложение текста, в котором стоит слово (для контекста Капи). */
+function sentenceWith(text, word) {
+  const parts = text.split(/(?<=[.!?…])\s+/);
+  const re = new RegExp(`(^|[^A-Za-zА-Яа-яЁёӘәҒғҚқҢңӨөҰұҮүҺһІі])${word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}($|[^A-Za-zА-Яа-яЁёӘәҒғҚқҢңӨөҰұҮүҺһІі])`);
+  return (parts.find((s) => re.test(s)) || '').trim().slice(0, 300);
+}
+
+function wordQuestion(word, title, sentence) {
+  return t('word.q').replace('{w}', () => word).replace('{t}', () => title) + (sentence ? ' ' + t('word.ctx').replace('{s}', () => sentence) : '');
 }
 
 export function renderPractice(topicId) {
@@ -83,6 +111,31 @@ export function renderPractice(topicId) {
 }
 
 export function registerPracticeActions(rerender) {
+  /* Нажали на слово в тексте — окно со словом и предложением, вопрос Капи */
+  action('word', ({ w, p }) => {
+    const ps = PASSAGES[p];
+    if (!ps || !w) return;
+    const sentence = sentenceWith(loc(ps.text), w);
+    const q = wordQuestion(w, loc(ps.title), sentence);
+    openModal(`
+      <div class="word-sheet">
+        <span class="word-ic">${icon('book', 22)}</span>
+        <h2>«${esc(w)}»</h2>
+        ${sentence ? `<blockquote class="word-ctx">${esc(sentence)}</blockquote>` : ''}
+        <p class="note">${t('word.sub')}</p>
+        <div class="q-actions">
+          <button class="btn btn-soft" data-act="word-close">${t('word.close')}</button>
+          <a class="btn" href="#/tutor?ask=${encodeURIComponent(q)}" data-act="word-ask">${icon('chat', 16)} ${t('word.ask')}</a>
+        </div>
+      </div>`);
+  });
+  action('word-close', () => closeModal());
+  action('word-ask', (_d, el) => { closeModal(); location.hash = el.getAttribute('href'); });
+  // Слово можно выбрать и с клавиатуры
+  document.addEventListener('keydown', (e) => {
+    if ((e.key === 'Enter' || e.key === ' ') && e.target?.classList?.contains('pw')) { e.preventDefault(); e.target.click(); }
+  });
+
   action('pr-pick', ({ i }) => { if (!S || S.revealed) return; S.selected = Number(i); rerender(); });
   action('pr-hint', () => { if (!S) return; S.hint = true; rerender(); });
   action('pr-check', (_d, el) => {
