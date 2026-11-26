@@ -7,6 +7,45 @@ import { action } from './dom.js';
 import { requireAuth } from './auth.js';
 
 let P = { phase: 'intro', idx: 0, answers: {}, result: null, t0: 0 };
+let rerenderRef = () => {};
+
+/* ─── Режим фокуса: весь экран, ничего лишнего ───────────────────────────
+   Во время теста прячем меню и шапку, пробуем развернуть браузер на весь
+   экран. Секундомер включается по желанию (по умолчанию скрыт, чтобы не
+   давил). Выйти можно кнопкой «Выйти» или клавишей Esc — с подтверждением,
+   ответы не сохраняются. */
+const SW_KEY = 'nasstudy.pisaClock';
+let clockOn = localStorage.getItem(SW_KEY) === '1';
+let clockTimer = null;
+let wantFs = false; // ученик в полноэкранном режиме (или хотел в него)
+const RECOMMENDED_MIN = () => Math.round(PISA_ITEMS.length * 1.5);
+
+const fsEl = () => document.fullscreenElement || document.webkitFullscreenElement;
+function enterFs() {
+  const el = document.documentElement;
+  const req = el.requestFullscreen || el.webkitRequestFullscreen;
+  if (!req) return;
+  try { const r = req.call(el, { navigationUI: 'hide' }); wantFs = true; r?.catch?.(() => { wantFs = false; }); } catch { wantFs = false; }
+}
+function exitFs() {
+  wantFs = false;
+  if (!fsEl()) return;
+  const ex = document.exitFullscreen || document.webkitExitFullscreen;
+  try { ex?.call(document)?.catch?.(() => {}); } catch { /* уже вышли */ }
+}
+function setFocus(on) {
+  document.documentElement.classList.toggle('pisa-focus', on);
+  if (!on) { clearInterval(clockTimer); clockTimer = null; exitFs(); }
+}
+const mmss = (ms) => { const s = Math.max(0, Math.floor(ms / 1000)); return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`; };
+function tickClock() {
+  const el = document.getElementById('pisaClock');
+  if (!el) return;
+  const ms = Date.now() - P.t0;
+  el.textContent = mmss(ms);
+  el.closest('.pf-clock')?.classList.toggle('over', ms > RECOMMENDED_MIN() * 60000);
+}
+function startClock() { clearInterval(clockTimer); clockTimer = setInterval(tickClock, 1000); }
 
 function stimulusHtml(key) {
   const s = PISA_STIMULI[key];
@@ -47,7 +86,18 @@ function test() {
   const sel = P.answers[q.id];
   const steps = PISA_ITEMS.map((x, i) => `<i class="${i === P.idx ? 'now' : P.answers[x.id] !== undefined ? 'ok' : ''}"></i>`).join('');
   const domain = q.domain === 'math' ? t('pisa.math') : t('pisa.reading');
+  const done = Object.keys(P.answers).length;
+  const fsOn = Boolean(fsEl());
   return `
+    <div class="pf-bar">
+      <div class="pf-left"><span class="pf-ic">${icon('target', 18)}</span><span><b>PISA</b><small>${tf('pisa.answered', { a: done, n: PISA_ITEMS.length })}</small></span></div>
+      <div class="pf-mid">${clockOn ? `<span class="pf-clock" title="${esc(tf('pisa.clockHint', { n: RECOMMENDED_MIN() }))}">${icon('clock', 16)}<b id="pisaClock">${mmss(Date.now() - P.t0)}</b><small>/ ~${RECOMMENDED_MIN()} ${t('pisa.min')}</small></span>` : ''}</div>
+      <div class="pf-right">
+        <button class="pf-btn ${clockOn ? 'on' : ''}" data-act="pisa-clock" aria-pressed="${clockOn}" title="${esc(t('pisa.clockTip'))}">${icon('clock', 17)}<span>${t(clockOn ? 'pisa.clockOff' : 'pisa.clockOn')}</span></button>
+        <button class="pf-btn pf-fs" data-act="pisa-fs" title="${esc(t(fsOn ? 'pisa.fsOff' : 'pisa.fsOn'))}" aria-label="${esc(t(fsOn ? 'pisa.fsOff' : 'pisa.fsOn'))}">${fsOn ? FS_EXIT : FS_ENTER}</button>
+        <button class="pf-btn pf-exit" data-act="pisa-exit" title="Esc">${icon('close', 17)}<span>${t('pisa.exit')}</span><kbd>Esc</kbd></button>
+      </div>
+    </div>
     <div class="practice ${q.stimulus ? 'with-text' : ''}">
       ${q.stimulus ? stimulusHtml(q.stimulus) : ''}
       <section class="qcard page-enter">
@@ -117,6 +167,8 @@ function result() {
 }
 
 const LOAD_MS = 2600;
+const FS_ENTER = '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>';
+const FS_EXIT = '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg>';
 
 /** Экран подготовки теста: кольца-мишень, полоска и три шага по очереди. */
 function loading() {
@@ -131,7 +183,11 @@ function loading() {
 }
 
 export function renderPisa() {
-  const body = P.phase === 'loading' ? loading() : P.phase === 'test' ? test() : P.phase === 'result' && P.result ? result() : intro();
+  const focus = P.phase === 'test' || P.phase === 'loading';
+  setFocus(focus);
+  if (P.phase === 'test') { if (clockOn) { startClock(); } else { clearInterval(clockTimer); clockTimer = null; } }
+  if (focus) return P.phase === 'loading' ? loading() : test();
+  const body = P.phase === 'result' && P.result ? result() : intro();
   return `${header(t('pisa.title'), t('pisa.sub'))}${body}`;
 }
 
@@ -143,21 +199,27 @@ export function animatePisa() {
 }
 
 export function registerPisaActions(rerender) {
+  rerenderRef = rerender;
   // Перед тестом — короткая загрузка (~2,6 с): ученик успевает настроиться
   action('pisa-start', () => {
     if (P.phase === 'loading') return;
     if (!requireAuth('auth.rPisa')) return;
+    enterFs(); // нужен клик ученика — поэтому здесь, а не после загрузки
     P = { phase: 'loading', idx: 0, answers: {}, result: null, t0: 0 };
     rerender(); window.scrollTo({ top: 0 });
     setTimeout(() => {
       if (P.phase !== 'loading') return;
       P.phase = location.hash.startsWith('#/pisa') ? 'test' : 'intro';
+      if (P.phase !== 'test') exitFs();
       P.t0 = Date.now();
       rerender(); window.scrollTo({ top: 0 });
     }, LOAD_MS);
   });
   action('pisa-pick', ({ i }) => { P.answers[PISA_ITEMS[P.idx].id] = Number(i); rerender(); });
   action('pisa-nav', ({ d }) => { P.idx = Math.max(0, Math.min(PISA_ITEMS.length - 1, P.idx + Number(d))); rerender(); window.scrollTo({ top: 0, behavior: 'smooth' }); });
+  action('pisa-clock', () => { clockOn = !clockOn; localStorage.setItem(SW_KEY, clockOn ? '1' : '0'); rerender(); });
+  action('pisa-fs', () => { if (fsEl()) exitFs(); else enterFs(); setTimeout(rerender, 250); });
+  action('pisa-exit', () => confirmLeavePisa('#/pisa'));
   action('pisa-finish', () => {
     P.result = scorePisa(P.answers);
     P.phase = 'result';
@@ -189,12 +251,33 @@ export function confirmLeavePisa(target) {
 }
 
 export function registerPisaLeave() {
-  action('pisa-stay', () => closeModal());
+  action('pisa-stay', () => { closeModal(); if (wantFs && !fsEl()) enterFs(); setTimeout(rerenderRef, 250); });
   action('pisa-leave', ({ to }) => {
     P = { phase: 'intro', idx: 0, answers: {}, result: null, t0: 0 };
     closeModal();
-    location.hash = to || '#/';
+    setFocus(false);
+    const dest = to || '#/';
+    if (location.hash === dest) rerenderRef(); else location.hash = dest;
+    window.scrollTo({ top: 0 });
   });
+  // Esc во время теста — спросить, выйти ли (ответы не сохранятся)
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape' || P.phase !== 'test') return;
+    if (document.querySelector('#modalRoot .sheet')) return; // окно уже открыто — Esc закроет его
+    e.preventDefault();
+    e.stopImmediatePropagation(); // иначе общий обработчик Esc тут же закроет это окно
+    confirmLeavePisa('#/pisa');
+  });
+  // В полноэкранном режиме браузер сам забирает Esc и выходит из него — тогда тоже спрашиваем
+  const onFs = () => {
+    if (fsEl() || P.phase !== 'test') { rerenderRef(); return; }
+    if (wantFs && !document.querySelector('#modalRoot .sheet')) confirmLeavePisa('#/pisa');
+    rerenderRef();
+  };
+  document.addEventListener('fullscreenchange', onFs);
+  document.addEventListener('webkitfullscreenchange', onFs);
+  // Ушли с раздела PISA другим путём — режим фокуса выключаем
+  window.addEventListener('hashchange', () => { if (!location.hash.startsWith('#/pisa')) setFocus(false); });
   // Клик по ссылке на другой раздел перехватываем до перехода — история браузера не засоряется
   document.addEventListener('click', (e) => {
     if (!pisaActive()) return;
