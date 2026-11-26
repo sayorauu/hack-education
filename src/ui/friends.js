@@ -173,7 +173,7 @@ export function renderFriends(params, seg) {
         <section class="panel">
           <div class="sec-head"><h2>${t('fr.add')}</h2></div>
           <form class="fr-add" data-act="fr-add">
-            <input class="input fr-add-input" name="code" maxlength="6" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ABC123" aria-label="${esc(t('fr.add'))}">
+            <input class="input fr-add-input" id="frAddCode" name="code" maxlength="6" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ABC123" aria-label="${esc(t('fr.add'))}">
             <button class="btn" type="submit">${icon('users', 16)} ${t('fr.addBtn')}</button>
           </form>
           ${F.addMsg ? `<p class="fr-add-msg ${F.addOk ? 'ok' : 'bad'}">${esc(F.addMsg)}</p>` : ''}
@@ -268,6 +268,7 @@ export function registerFriendsActions(rerender) {
       const name = r.user?.name || t('fr.noName');
       F.addOk = ['sent', 'accepted', 'already', 'pending'].includes(r.status);
       F.addMsg = tf('fr.add_' + r.status, { name });
+      if (F.addOk) form.querySelector('input').value = ''; // код принят — поле очищаем
       await refreshList(true);
     } catch (e) { F.addOk = false; F.addMsg = t(socialErrorKey(e)); }
     rerender();

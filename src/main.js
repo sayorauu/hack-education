@@ -67,6 +67,11 @@ function render() {
   const active = document.activeElement;
   const keepId = active && active.id && main.contains(active) ? active.id : null;
   const caret = keepId && 'selectionStart' in active ? active.selectionStart : null;
+  // Что ученик уже набрал (код друга, сообщение…) не должно пропадать при фоновой перерисовке
+  const typed = {};
+  main.querySelectorAll('input[id], textarea[id]').forEach((el) => {
+    if (!['file', 'radio', 'checkbox', 'hidden', 'submit'].includes(el.type) && el.value !== el.defaultValue) typed[el.id] = el.value;
+  });
 
   rail.innerHTML = renderRail(path);
   paintBadge();
@@ -74,6 +79,9 @@ function render() {
   document.title = t('app.title');
   document.documentElement.lang = getSettings().lang;
 
+  if (path === lastPath) {
+    for (const [id, v] of Object.entries(typed)) { const el = document.getElementById(id); if (el && main.contains(el)) el.value = v; }
+  }
   if (keepId) {
     const el = document.getElementById(keepId);
     if (el) { el.focus(); if (caret !== null && el.setSelectionRange) try { el.setSelectionRange(caret, caret); } catch { /* не текстовое поле */ } }
