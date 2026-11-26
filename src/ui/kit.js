@@ -52,9 +52,9 @@ export function renderRail(path) {
       <a class="rail-logo" href="#/" aria-label="NASstudy"><img class="logo-img" src="logo-mark.png" alt=""></a>
       <span class="rail-brand">NASstudy</span>
     </div>
-    <button class="rail-toggle" data-act="rail-toggle" aria-expanded="${open}" aria-label="${esc(t(open ? 'rail.collapse' : 'rail.expand'))}" title="${esc(t(open ? 'rail.collapse' : 'rail.expand'))}">${icon(open ? 'chevL' : 'chevR', 16)}</button>
     ${NAV.map((n) => `<a class="nav ${active(n) ? 'on' : ''} ${n.extra ? 'nav-extra' : ''}" href="#${n.path}" data-tip="${esc(t(n.key))}" aria-label="${esc(t(n.key))}"${active(n) ? ' aria-current="page"' : ''}>${navIcon(n.icon)}<span class="nav-lbl">${esc(t(n.key === 'nav.tutor' ? 'nav.tutorShort' : n.key))}</span></a>`).join('')}
     <div class="rail-spacer"></div>
+    <button class="nav rail-toggle" data-act="rail-toggle" aria-expanded="${open}" data-tip="${esc(t('rail.expand'))}" aria-label="${esc(t(open ? 'rail.collapse' : 'rail.expand'))}"><span class="rt-ic">${icon('chevL', 20)}</span><span class="nav-lbl">${esc(t('rail.collapse'))}</span></button>
     <a class="rail-user" href="#/profile" aria-label="${esc(t('nav.profile'))}">
       <span class="rail-avatar">${esc(initials(p.name || 'NS'))}</span>
       <span class="nav-lbl"><b>${esc(p.name || 'NASstudy')}</b><small>${p.grade ? esc(tf('common.grade', { n: p.grade })) : ''}</small></span>

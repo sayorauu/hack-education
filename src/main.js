@@ -73,7 +73,14 @@ function render() {
 
 action('theme', (_d, el) => switchTheme(el, render));
 action('lang', ({ id }) => switchLang(id, render));
-action('rail-toggle', () => { update((s) => { s.settings.railOpen = s.settings.railOpen === false; }); render(); });
+// Меню сворачиваем без перерисовки: CSS плавно меняет ширину и подписи
+action('rail-toggle', (_d, btn) => {
+  update((s) => { s.settings.railOpen = s.settings.railOpen === false; });
+  const open = getSettings().railOpen !== false;
+  document.documentElement.dataset.rail = open ? 'open' : 'closed';
+  btn.setAttribute('aria-expanded', String(open));
+  btn.setAttribute('aria-label', t(open ? 'rail.collapse' : 'rail.expand'));
+});
 
 registerDashboardActions(render);
 registerPracticeActions(render);

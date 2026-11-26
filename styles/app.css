@@ -982,46 +982,82 @@ html[lang='kk'] .glyph.num i::after { content: ' сын'; }
 .max-row { color: var(--dim); font-weight: 600; }
 .max-note { margin-top: 10px; padding: 10px 14px; border-radius: 12px; background: var(--cream); color: var(--cream-ink); font-size: 13px; font-weight: 600; }
 
-/* ─── Каркас на весь экран + сворачиваемое меню ───────────────────────── */
-:root { --rail-w: 96px; }
-html[data-rail='open'] { --rail-w: 236px; }
+
+/* ─── Каркас на весь экран + сворачиваемое меню ───────────────────────────
+   Иконки, логотип и аватар стоят на одном месте в обоих состояниях
+   (по центру узкой колонки 96px), меняется только ширина колонки и
+   подписи плавно «вытягиваются». Свёрнутое меню ничего не обрезает,
+   поэтому всплывающие подсказки видны поверх блоков. */
+:root { --rail-w: 96px; --rail-pad: 21px; }
+html[data-rail='open'] { --rail-w: 240px; }
 .app {
   max-width: none; margin: 0; min-height: 100dvh; border-radius: 0; box-shadow: none;
   grid-template-columns: var(--rail-w) minmax(0, 1fr);
-  transition: grid-template-columns 0.35s var(--ease), background 0.4s var(--ease);
+  transition: grid-template-columns 0.32s cubic-bezier(0.32, 0.72, 0, 1), background 0.4s var(--ease);
 }
 [data-theme='dark'] .app { box-shadow: none; }
-.rail { top: 0; height: 100dvh; padding: 26px 0 22px; border-right: 1px solid var(--line); background: var(--app); overflow: hidden; }
+.rail {
+  top: 0; height: 100dvh; z-index: 60; align-items: stretch; gap: 6px;
+  padding: 24px var(--rail-pad) 20px; border-right: 1px solid var(--line); background: var(--app);
+}
+html[data-rail='open'] .rail { overflow: hidden; } /* при раскрытии подписи не вылезают за край */
 .main { padding: 34px 44px 44px 40px; }
-.rail-head { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
-.rail-head .rail-logo { margin: 0; flex: none; }
-.rail-brand { display: none; font-size: 19px; font-weight: 750; letter-spacing: -0.02em; white-space: nowrap; }
-.rail-toggle { width: 34px; height: 34px; border-radius: 11px; display: grid; place-items: center; border: 1px solid var(--line); background: var(--app); color: var(--dim); margin-bottom: 10px; transition: background 0.2s, color 0.2s, transform 0.2s var(--spring); }
-.rail-toggle:hover { color: var(--text); background: var(--soft); }
-.rail-toggle:active { transform: scale(0.92); }
-.nav-lbl { display: none; min-width: 0; font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.rail-user { display: flex; align-items: center; gap: 12px; color: var(--text); }
+
+/* Логотип и название */
+.rail-head { display: flex; align-items: center; gap: 12px; height: 50px; padding-left: 4px; margin-bottom: 18px; }
+.rail-head .rail-logo { margin: 0; flex: none; width: 46px; height: 46px; }
+.rail-brand { font-size: 19px; font-weight: 750; letter-spacing: -0.02em; white-space: nowrap; }
+
+/* Пункты меню (ссылки и кнопка «Свернуть») */
+html .rail .nav {
+  position: relative; display: flex; align-items: center; gap: 14px; width: auto; height: 50px; padding: 0 15px;
+  border: 0; border-radius: 15px; background: none; color: var(--dim); font: inherit; text-align: left;
+  transition: background 0.2s var(--ease), color 0.2s var(--ease), transform 0.2s var(--spring);
+}
+html .rail .nav:hover { color: var(--text); background: var(--soft); }
+html .rail .nav.on { color: var(--accent); background: var(--accent-wash); }
+html .rail .nav:active { transform: scale(0.96); }
+html .rail .nav .nav-ic, .rail .nav .rt-ic { flex: none; }
+html .rail .nav.on .nav-lbl { color: var(--accent); }
+.rt-ic { display: grid; place-items: center; width: 24px; height: 24px; transition: transform 0.32s cubic-bezier(0.32, 0.72, 0, 1); }
+html[data-rail='closed'] .rt-ic { transform: rotate(180deg); }
+
+/* Подписи: в свёрнутом меню ширина 0, в развёрнутом плавно появляются */
+.nav-lbl, .rail-brand {
+  display: block; min-width: 0; max-width: 160px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+  font-size: 15px; font-weight: 600;
+  transition: max-width 0.32s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.2s var(--ease) 0.08s;
+}
+.rail-brand { font-size: 19px; font-weight: 750; }
+html[data-rail='closed'] .nav-lbl, html[data-rail='closed'] .rail-brand { max-width: 0; opacity: 0; transition: max-width 0.32s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.12s; }
+
+/* Подсказка при наведении — только в свёрнутом меню, поверх всего */
+html .rail .nav::after {
+  content: attr(data-tip); position: absolute; left: calc(100% + 14px); top: 50%; z-index: 80;
+  transform: translateY(-50%) translateX(-4px); white-space: nowrap; pointer-events: none;
+  background: var(--ink-btn); color: var(--on-ink); font-size: 12px; font-weight: 600; padding: 6px 10px; border-radius: 10px;
+  opacity: 0; transition: opacity 0.15s, transform 0.15s; box-shadow: 0 8px 20px -10px rgba(0, 0, 0, 0.5);
+}
+html[data-rail='closed'] .rail .nav:hover::after, html[data-rail='closed'] .rail .nav:focus-visible::after { opacity: 1; transform: translateY(-50%); }
+html[data-rail='open'] .rail .nav::after { display: none; }
+
+/* Ученик внизу */
+.rail-user { display: flex; align-items: center; gap: 12px; padding: 8px 0 0 2px; color: var(--text); }
+.rail-user .rail-avatar { flex: none; }
 .rail-user .nav-lbl b { display: block; font-size: 14px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; }
 .rail-user .nav-lbl small { display: block; font-size: 12px; color: var(--faint); font-weight: 500; }
+.rail-toggle { margin-top: 4px; color: var(--faint); }
 
-/* Развёрнутое меню: иконка + подпись */
-html[data-rail='open'] .rail { align-items: stretch; padding: 26px 16px 22px; }
-html[data-rail='open'] .rail-head { padding: 0 4px; }
-html[data-rail='open'] .rail-brand { display: block; }
-html[data-rail='open'] .rail-toggle { position: absolute; top: 34px; right: 14px; margin: 0; }
-html[data-rail='open'] .rail a.nav { width: auto; height: 50px; display: flex; align-items: center; justify-content: flex-start; gap: 14px; padding: 0 15px; border-radius: 15px; }
-html[data-rail='open'] .rail a.nav .nav-lbl { display: block; }
-html[data-rail='open'] .rail a.nav.on .nav-lbl { color: var(--accent); }
-html[data-rail='open'] .rail a.nav::after { display: none; }
-html[data-rail='open'] .rail-user { padding: 8px 8px 0; }
-html[data-rail='open'] .rail-user .nav-lbl { display: block; }
-
-/* Телефон: нижняя панель как раньше, без подписей и переключателя */
+/* Телефон: нижняя панель, как раньше */
 @media (max-width: 760px) {
-  .app, html[data-rail] .app { grid-template-columns: minmax(0, 1fr); }
-  html[data-rail] .rail { top: auto; bottom: 0; align-items: center; padding: 10px 8px calc(10px + env(safe-area-inset-bottom)); border-right: 0; border-top: 1px solid var(--line); overflow: visible; height: 74px; }
-  html[data-rail] .rail a.nav { display: grid; place-items: center; width: 46px; height: 46px; padding: 0; }
-  html[data-rail] .rail a.nav.nav-extra { display: none; }
-  html[data-rail] .nav-lbl, .rail-toggle, .rail-head, .rail-user { display: none !important; }
+  .app { grid-template-columns: minmax(0, 1fr); transition: none; }
+  .rail, html[data-rail] .rail {
+    top: auto; bottom: 0; height: 74px; flex-direction: row; justify-content: space-around; align-items: center; gap: 0;
+    padding: 10px 8px calc(10px + env(safe-area-inset-bottom)); border-right: 0; border-top: 1px solid var(--line); overflow: visible;
+  }
+  html .rail .nav { width: 46px; height: 46px; padding: 0; justify-content: center; }
+  html .rail a.nav.nav-extra { display: none; }
+  .rail .nav::after, .nav-lbl, .rail-toggle, .rail-head, .rail-user, .rail-spacer { display: none !important; }
   .main { padding: 20px 16px 24px; }
 }
+@media (prefers-reduced-motion: reduce) { .app, .nav-lbl, .rail-brand, .rt-ic { transition: none; } }
