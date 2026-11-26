@@ -7,7 +7,7 @@ import {
   getLocalStatus, onLocalStatus, localReady, answerOnDevice, LOCAL_LANGS,
 } from '../engine/localllm.js';
 import { TOPIC_BY_ID } from '../data/curriculum.js';
-import { header, esc } from './kit.js';
+import { header, esc, kapiSvg } from './kit.js';
 import { action, md, toast } from './dom.js';
 
 /**
@@ -69,7 +69,7 @@ async function syncLocal() {
 
 /* ─── Экран ───────────────────────────────────────────────────────────── */
 
-const kapiAva = (cls = '') => `<span class="kapi-ava ${cls}" aria-hidden="true"><img class="logo-img" src="logo-mark.png" alt=""></span>`;
+const kapiAva = (cls = '') => `<span class="kapi-ava ${cls}" aria-hidden="true">${kapiSvg(cls === 'think' ? 'talk' : '')}</span>`;
 
 function msgHtml(m) {
   const refs = (m.refs || []).map((id) => TOPIC_BY_ID[id]).filter(Boolean);

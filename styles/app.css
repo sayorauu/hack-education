@@ -1061,3 +1061,24 @@ html[data-rail='open'] .rail .nav::after { display: none; }
   .main { padding: 20px 16px 24px; }
 }
 @media (prefers-reduced-motion: reduce) { .app, .nav-lbl, .rail-brand, .rt-ic { transition: none; } }
+
+/* ─── Живой Капи: двигается сам медведь, плашка стоит на месте ─────────── */
+.kapi-ava.think, .pl-bear { animation: none; }
+.kapi { display: block; width: 100%; height: 100%; overflow: visible; }
+.kapi .k-body { transform-box: view-box; transform-origin: 50% 92%; animation: kBreath 3.6s ease-in-out infinite; }
+/* Моргание: «веко» на мгновение опускается на глаз-дугу */
+.kapi .k-lid { transform-box: fill-box; transform-origin: 50% 0; transform: scaleY(0); animation: kBlink 4.6s infinite; }
+/* Рот закрыт, пока Капи не «говорит» */
+.kapi .k-mouth { transform-box: fill-box; transform-origin: 50% 0; transform: scale(0); }
+@keyframes kBreath { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.025, 1.035); } }
+@keyframes kBlink { 0%, 90%, 100% { transform: scaleY(0); } 93%, 95% { transform: scaleY(1); } }
+/* Капи думает или отвечает: рот открывается, голова мягко покачивается, моргает чаще */
+.kapi.talk .k-body { animation: kSway 2.2s ease-in-out infinite; }
+.kapi.talk .k-mouth { animation: kTalk 0.42s ease-in-out infinite alternate; }
+.kapi.talk .k-lid { animation-duration: 2.8s; }
+@keyframes kSway { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(-5deg); } 75% { transform: rotate(5deg); } }
+@keyframes kTalk { from { transform: scale(0.35, 0.15); } to { transform: scale(1, 1); } }
+/* Разные Капи на странице моргают не одновременно */
+.rail-logo .kapi .k-lid { animation-delay: 1.3s; }
+.tour-bear .kapi .k-lid { animation-delay: 0.6s; }
+@media (prefers-reduced-motion: reduce) { .kapi .k-body, .kapi .k-lid, .kapi .k-mouth { animation: none; } }

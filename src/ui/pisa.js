@@ -2,7 +2,7 @@ import { icon } from './icons.js';
 import { t, tf, loc, fmtDate } from '../i18n.js';
 import { getProfile, recordPisa, COINS } from '../state.js';
 import { PISA_ITEMS, PISA_STIMULI, PISA_AVG, scorePisa } from '../data/pisa.js';
-import { header, esc, coinBurst, openModal, closeModal } from './kit.js';
+import { header, esc, coinBurst, openModal, closeModal, kapiSvg } from './kit.js';
 import { action } from './dom.js';
 
 let P = { phase: 'intro', idx: 0, answers: {}, result: null, t0: 0 };
@@ -121,7 +121,7 @@ const LOAD_MS = 2600;
 function loading() {
   return `
     <section class="pisa-load page-enter" style="--load:${LOAD_MS}ms">
-      <div class="pl-target"><i></i><i></i><i></i><span class="pl-bear"><img class="logo-img" src="logo-mark.png" alt=""></span></div>
+      <div class="pl-target"><i></i><i></i><i></i><span class="pl-bear">${kapiSvg('talk')}</span></div>
       <h2>${t('pisa.loadTitle')}</h2>
       <div class="pl-bar"><i></i></div>
       <ul class="pl-steps">${['load1', 'load2', 'load3'].map((k, i) => `<li style="animation-delay:${0.25 + i * 0.75}s">${icon('check', 14)} ${t('pisa.' + k)}</li>`).join('')}</ul>

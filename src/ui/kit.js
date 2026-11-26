@@ -40,6 +40,21 @@ export const navIcon = (name) => NAV_SVG[name]
   ? `<svg class="nav-ic" viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden="true">${NAV_SVG[name]}</svg>`
   : icon(name, 22);
 
+/**
+ * Живой Капи: логотип + «веко» над глазом и рот, которые двигаются в CSS.
+ * Координаты взяты из logo-mark.png (512×512): глаз-дуга x 270–301, y 130–156,
+ * центр улыбки около (171, 222). В тёмной теме вся картинка инвертируется
+ * фильтром .logo-img, поэтому веко и рот рисуем тем же тёмным цветом.
+ * cls: '' — только моргает и «дышит»; 'talk' — говорит и покачивает головой.
+ */
+export function kapiSvg(cls = '') {
+  return `<svg class="kapi logo-img ${cls}" viewBox="0 0 512 512" aria-hidden="true" focusable="false">
+    <g class="k-body"><image href="logo-mark.png" width="512" height="512"/>
+      <rect class="k-lid" x="264" y="124" width="44" height="38" rx="6" fill="#0d0d0f"/>
+      <ellipse class="k-mouth" cx="171" cy="230" rx="16" ry="13" fill="#0d0d0f"/>
+    </g></svg>`;
+}
+
 export function renderRail(path) {
   const p = getProfile();
   const section = '/' + (path.split('/')[1] || '');
@@ -49,7 +64,7 @@ export function renderRail(path) {
   document.documentElement.dataset.rail = open ? 'open' : 'closed';
   return `
     <div class="rail-head">
-      <a class="rail-logo" href="#/" aria-label="NASstudy"><img class="logo-img" src="logo-mark.png" alt=""></a>
+      <a class="rail-logo" href="#/" aria-label="NASstudy">${kapiSvg()}</a>
       <span class="rail-brand">NASstudy</span>
     </div>
     ${NAV.map((n) => `<a class="nav ${active(n) ? 'on' : ''} ${n.extra ? 'nav-extra' : ''}" href="#${n.path}" data-tip="${esc(t(n.key))}" aria-label="${esc(t(n.key))}"${active(n) ? ' aria-current="page"' : ''}>${navIcon(n.icon)}<span class="nav-lbl">${esc(t(n.key === 'nav.tutor' ? 'nav.tutorShort' : n.key))}</span></a>`).join('')}
