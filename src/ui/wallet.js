@@ -110,6 +110,10 @@ export function renderWallet() {
       <div style="display:grid;gap:22px">
         <section class="panel">
           <div class="sec-head"><h2>${t('wallet.payout')}</h2><span class="spacer"></span><span class="demo-badge dark">${t('wallet.demo')}</span></div>
+          <div class="demo-banner" role="note">
+            <span class="db-ic">${icon('shield', 20)}</span>
+            <span><b>${t('wallet.demoBannerT')}</b>${t('wallet.demoBannerB')}</span>
+          </div>
           <div class="field"><label>${t('wallet.amount')}: <b style="color:var(--text)">${fmt(amount)}</b> → <b style="color:var(--text)">${kzt(amount)} ₸</b></label>
             <input class="range" type="range" id="payAmount" min="${COINS.minPayout}" max="${max}" step="100" value="${amount}" ${can ? '' : 'disabled'} aria-label="${esc(t('wallet.amount'))}">
             <span class="note">${can ? tf('wallet.min', { n: fmt(COINS.minPayout) }) : tf('wallet.notEnough', { n: fmt(COINS.minPayout - p.coins) })}</span>

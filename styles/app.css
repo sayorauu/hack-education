@@ -973,3 +973,9 @@ html[lang='kk'] .glyph.num i::after { content: ' сын'; }
 .leave-ic { width: 54px; height: 54px; border-radius: 17px; display: grid; place-items: center; background: var(--bad-wash); color: var(--bad); }
 .leave-sheet .q-actions { justify-content: center; margin-top: 10px; }
 .leave-btn { color: var(--bad); }
+
+/* Заметная плашка «ДЕМО» над формой оплаты */
+.demo-banner { display: flex; gap: 12px; align-items: flex-start; margin: 4px 0 6px; padding: 14px 16px; border-radius: 16px; background: #fff4e5; border: 1.5px solid #f2a33a; color: #6b3d00; font-size: 14px; line-height: 1.45; }
+.demo-banner b { font-weight: 800; }
+.db-ic { flex: none; width: 34px; height: 34px; border-radius: 11px; display: grid; place-items: center; background: #f2a33a; color: #fff; }
+[data-theme='dark'] .demo-banner { background: rgba(242, 163, 58, 0.12); border-color: rgba(242, 163, 58, 0.6); color: #ffd59a; }
