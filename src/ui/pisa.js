@@ -36,9 +36,9 @@ function intro() {
       </div>
     </section>
     ${hist.length ? `<section style="margin-top:28px"><div class="sec-head"><h2>${t('pisa.history')}</h2></div>
-      <div style="display:grid;gap:8px">${hist.map((r) => `<div class="lb-row" style="grid-template-columns:1fr auto auto auto">
-        <span>${fmtDate(r.ts, { year: true })}</span>
-        <span>${t('pisa.math')}: <b>${r.math.score}</b></span><span>${t('pisa.reading')}: <b>${r.reading.score}</b></span><b>${r.total}</b></div>`).join('')}</div></section>` : ''}`;
+      <div style="display:grid;gap:8px">${hist.map((r) => `<div class="lb-row pisa-hist">
+        <span class="ph-date">${fmtDate(r.ts, { year: true })}</span>
+        <span>${t('pisa.math')}: <b>${r.math.score}</b></span><span>${t('pisa.reading')}: <b>${r.reading.score}</b></span><b class="ph-total">${r.total}</b></div>`).join('')}</div></section>` : ''}`;
 }
 
 function test() {
@@ -115,8 +115,22 @@ function result() {
     </section>`;
 }
 
+const LOAD_MS = 2600;
+
+/** Экран подготовки теста: кольца-мишень, полоска и три шага по очереди. */
+function loading() {
+  return `
+    <section class="pisa-load page-enter" style="--load:${LOAD_MS}ms">
+      <div class="pl-target"><i></i><i></i><i></i><span class="pl-bear"><img class="logo-img" src="logo-mark.png" alt=""></span></div>
+      <h2>${t('pisa.loadTitle')}</h2>
+      <div class="pl-bar"><i></i></div>
+      <ul class="pl-steps">${['load1', 'load2', 'load3'].map((k, i) => `<li style="animation-delay:${0.25 + i * 0.75}s">${icon('check', 14)} ${t('pisa.' + k)}</li>`).join('')}</ul>
+      <p class="note">${tf('pisa.loadNote', { n: PISA_ITEMS.length })}</p>
+    </section>`;
+}
+
 export function renderPisa() {
-  const body = P.phase === 'test' ? test() : P.phase === 'result' && P.result ? result() : intro();
+  const body = P.phase === 'loading' ? loading() : P.phase === 'test' ? test() : P.phase === 'result' && P.result ? result() : intro();
   return `${header(t('pisa.title'), t('pisa.sub'))}${body}`;
 }
 
@@ -128,7 +142,18 @@ export function animatePisa() {
 }
 
 export function registerPisaActions(rerender) {
-  action('pisa-start', () => { P = { phase: 'test', idx: 0, answers: {}, result: null, t0: Date.now() }; rerender(); window.scrollTo({ top: 0 }); });
+  // Перед тестом — короткая загрузка (~2,6 с): ученик успевает настроиться
+  action('pisa-start', () => {
+    if (P.phase === 'loading') return;
+    P = { phase: 'loading', idx: 0, answers: {}, result: null, t0: 0 };
+    rerender(); window.scrollTo({ top: 0 });
+    setTimeout(() => {
+      if (P.phase !== 'loading') return;
+      P.phase = location.hash.startsWith('#/pisa') ? 'test' : 'intro';
+      P.t0 = Date.now();
+      rerender(); window.scrollTo({ top: 0 });
+    }, LOAD_MS);
+  });
   action('pisa-pick', ({ i }) => { P.answers[PISA_ITEMS[P.idx].id] = Number(i); rerender(); });
   action('pisa-nav', ({ d }) => { P.idx = Math.max(0, Math.min(PISA_ITEMS.length - 1, P.idx + Number(d))); rerender(); window.scrollTo({ top: 0, behavior: 'smooth' }); });
   action('pisa-finish', () => {

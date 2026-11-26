@@ -23,6 +23,7 @@ const SUBJ_SVG = {
   algebra: '<svg viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="2.5"/><rect x="13" y="3" width="8" height="8" rx="2.5" opacity=".45"/><rect x="3" y="13" width="8" height="8" rx="2.5" opacity=".45"/><rect x="13" y="13" width="8" height="8" rx="2.5"/><path d="M5.5 7h3M7 5.5v3M15.5 17h3" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/></svg>',
   geometry: '<svg viewBox="0 0 24 24"><path d="M12 2.5 22 20H2z"/><circle cx="17" cy="16.5" r="5" opacity=".45"/></svg>',
   reading: '<svg viewBox="0 0 24 24"><path d="M2.5 5.2C5.6 4 8.7 4.2 11.2 6v14c-2.5-1.6-5.6-1.8-8.7-.7z"/><path d="M21.5 5.2C18.4 4 15.3 4.2 12.8 6v14c2.5-1.6 5.6-1.8 8.7-.7z" opacity=".45"/></svg>',
+  pisa: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" opacity=".3"/><circle cx="12" cy="12" r="6.5" opacity=".6"/><circle cx="12" cy="12" r="3"/></svg>',
 };
 export const subjIcon = (id) => `<span class="sicon">${SUBJ_SVG[id] || SUBJ_SVG.all}</span>`;
 

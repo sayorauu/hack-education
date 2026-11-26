@@ -7,13 +7,14 @@
  * интернет бывает нестабильным или почасовым.
  */
 
-const CACHE = 'nasstudy-v39';
+const CACHE = 'nasstudy-v44';
 
 const ASSETS = [
   './',
   'index.html',
   'manifest.webmanifest',
   'logo-bear.png',
+  'logo-mark.png',
   'styles/app.css',
   'fonts/onest-cyrillic-ext.woff2',
   'fonts/onest-cyrillic.woff2',

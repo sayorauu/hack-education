@@ -21,16 +21,32 @@ const NAV = [
   { path: '/pisa', icon: 'target', key: 'nav.pisa' },
   { path: '/leaderboard', icon: 'trophy', key: 'nav.leaderboard', extra: true },
   { path: '/wallet', icon: 'wallet', key: 'nav.wallet', extra: true },
-  { path: '/profile', icon: 'settings', key: 'nav.profile' },
+  { path: '/profile', icon: 'user', key: 'nav.profile' },
 ];
+
+/* Двухтоновые иконки меню: основа полупрозрачная, деталь сплошная */
+const NAV_SVG = {
+  home: '<path opacity=".35" d="M3 10.6 12 3.2l9 7.4V20a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 20z"/><rect x="9" y="13.2" width="6" height="8.3" rx="1.6"/>',
+  book: '<path opacity=".35" d="M2.5 5.2C5.6 4 8.7 4.2 11.2 6v14c-2.5-1.6-5.6-1.8-8.7-.7z"/><path d="M21.5 5.2C18.4 4 15.3 4.2 12.8 6v14c2.5-1.6 5.6-1.8 8.7-.7z"/>',
+  chat: '<path opacity=".35" d="M12 3c5.2 0 9.5 3.6 9.5 8s-4.3 8-9.5 8c-1.1 0-2.2-.2-3.2-.5L4 20.5l1.3-4A7.6 7.6 0 0 1 2.5 11C2.5 6.6 6.8 3 12 3z"/><circle cx="8" cy="11" r="1.5"/><circle cx="12" cy="11" r="1.5"/><circle cx="16" cy="11" r="1.5"/>',
+  target: '<circle cx="12" cy="12" r="10" opacity=".3"/><circle cx="12" cy="12" r="6.5" opacity=".55"/><circle cx="12" cy="12" r="3"/>',
+  trophy: '<path opacity=".35" d="M4 4.5h3v4a3 3 0 0 1-3-3zM20 4.5h-3v4a3 3 0 0 0 3-3z"/><path d="M6.5 3h11v6a5.5 5.5 0 0 1-11 0z"/><rect x="10.6" y="14" width="2.8" height="4" opacity=".35"/><rect x="7" y="18" width="10" height="3.2" rx="1.6"/>',
+  wallet: '<rect opacity=".35" x="2.5" y="5.5" width="19" height="15" rx="3.5"/><path d="M15.2 10.6h6.3v5h-6.3a2.5 2.5 0 0 1 0-5z"/><path d="M5.5 5.5 15.6 2.8a1.4 1.4 0 0 1 1.8 1.3v1.4z"/>',
+  user: '<circle cx="12" cy="7.8" r="4.3"/><path opacity=".35" d="M3.5 21a8.5 8.5 0 0 1 17 0z"/>',
+  shield: '<path opacity=".35" d="M12 2.5 20 5.5v6c0 5-3.4 8.7-8 10-4.6-1.3-8-5-8-10v-6z"/><path d="m8.4 12 2.6 2.6 4.6-5" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/>',
+  users: '<circle cx="9" cy="8" r="3.8"/><path opacity=".35" d="M2 20.5a7 7 0 0 1 14 0z"/><circle cx="17" cy="9" r="2.8" opacity=".55"/>',
+};
+export const navIcon = (name) => NAV_SVG[name]
+  ? `<svg class="nav-ic" viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden="true">${NAV_SVG[name]}</svg>`
+  : icon(name, 22);
 
 export function renderRail(path) {
   const p = getProfile();
   const section = '/' + (path.split('/')[1] || '');
   const active = (n) => (n.path === '/' ? path === '/' : section === n.path || (n.path === '/topics' && (section === '/topic' || section === '/practice')));
   return `
-    <a class="rail-logo" href="#/" aria-label="NASstudy"><img class="logo-img" src="logo-bear.png" alt=""></a>
-    ${NAV.map((n) => `<a class="nav ${active(n) ? 'on' : ''} ${n.extra ? 'nav-extra' : ''}" href="#${n.path}" data-tip="${esc(t(n.key))}" aria-label="${esc(t(n.key))}"${active(n) ? ' aria-current="page"' : ''}>${icon(n.icon, 22)}</a>`).join('')}
+    <a class="rail-logo" href="#/" aria-label="NASstudy"><img class="logo-img" src="logo-mark.png" alt=""></a>
+    ${NAV.map((n) => `<a class="nav ${active(n) ? 'on' : ''} ${n.extra ? 'nav-extra' : ''}" href="#${n.path}" data-tip="${esc(t(n.key))}" aria-label="${esc(t(n.key))}"${active(n) ? ' aria-current="page"' : ''}>${navIcon(n.icon)}</a>`).join('')}
     <div class="rail-spacer"></div>
     <a class="rail-avatar" href="#/profile" aria-label="${esc(t('nav.profile'))}">${esc(initials(p.name || 'NS'))}</a>`;
 }

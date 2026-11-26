@@ -21,7 +21,7 @@ const LANG_NAMES = { kk: ['Қазақша', 'ҚАЗ'], ru: ['Русский', '�
 
 function wizardHtml() {
   const dots = [0, 1, 2].map((i) => `<i class="${i === W.step ? 'now' : i < W.step ? 'done' : ''}"></i>`).join('');
-  const bear = `<span class="ob-bear"><img class="logo-img" src="logo-bear.png" alt=""></span>`;
+  const bear = `<span class="ob-bear"><img class="logo-img" src="logo-mark.png" alt=""></span>`;
   let body = '';
   if (W.step === 0) {
     body = `
@@ -177,7 +177,7 @@ function show() {
   const name = esc(getProfile().name || '');
   card.innerHTML = `
     <div class="tour-anim">
-      <div class="tour-top"><span class="tour-bear"><img class="logo-img" src="logo-bear.png" alt=""></span>
+      <div class="tour-top"><span class="tour-bear"><img class="logo-img" src="logo-mark.png" alt=""></span>
         <span class="tour-ic">${icon(s.ic, 16)}</span><span class="tour-count">${T.i + 1} / ${STEPS.length}</span></div>
       <h3>${tf('tour.' + s.k + 'T', { name })}</h3>
       <p>${tf('tour.' + s.k + 'B', { name })}</p>

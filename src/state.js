@@ -120,10 +120,11 @@ export function awardCoins(amount, reason, meta) { update((s) => addCoins(s.prof
  * Демо-вывод: списывает монеты и записывает «перевод». Реальных денег нет.
  * @returns {object|null} запись о выводе или null, если монет не хватает
  */
-export function requestPayout(coins, method) {
+export function requestPayout(coins, method, meta = {}) {
   const p = state.profile;
   if (coins < COINS.minPayout || coins > p.coins) return null;
-  const rec = { ts: Date.now(), coins, kzt: Math.round(coins * COINS.rateKzt), method, status: 'demo', id: 'NS-' + Date.now().toString(36).toUpperCase() };
+  // meta: { bank, to } — «to» только маска (последние цифры), полный номер не храним
+  const rec = { ts: Date.now(), coins, kzt: Math.round(coins * COINS.rateKzt), method, bank: meta.bank || null, to: meta.to || null, status: 'demo', id: 'NS-' + Date.now().toString(36).toUpperCase() };
   update((s) => {
     s.profile.payouts.unshift(rec);
     addCoins(s.profile, -coins, 'payout');

@@ -2,8 +2,8 @@ import { icon } from './icons.js';
 import { t, tf, loc, monthYear, fmtDate, WEEKDAYS, lang } from '../i18n.js';
 import { getProfile, masteryOf } from '../state.js';
 import { TOPICS, TOPIC_BY_ID, ITEMS, ITEMS_BY_TOPIC, SUBJECTS } from '../data/curriculum.js';
-import { header, avatar, esc, timeAgo, subjName, fmt } from './kit.js';
-import { glyphTile } from './topics.js';
+import { header, avatar, esc, timeAgo, subjName, fmt, navIcon } from './kit.js';
+import { glyphTile, subjIcon } from './topics.js';
 import { action } from './dom.js';
 
 let calOffset = 0; // смещение месяца в календаре
@@ -78,14 +78,14 @@ function progressCards() {
         const list = TOPICS.filter((tp) => tp.subject === s.id);
         const started = list.filter((tp) => p.mastery[tp.id]).length;
         return `<a class="pc pc-subj t-${s.tint}" href="#/topics?s=${s.id}">
-          <div class="top-row"><span class="sic">${icon(s.icon, 22)}</span><span class="num">${started}/${list.length}</span></div>
+          <div class="top-row"><span class="sic">${subjIcon(s.id)}</span><span class="num">${started}/${list.length}</span></div>
           <h3>${esc(loc(s))}</h3>
           <div class="pct">${tf('dash.startedTopics', { n: started, m: list.length })}</div>
           <div class="pring" style="--p:${Math.max(2, m)}"><b>${m}%</b></div>
         </a>`;
       }).join('')}
       <a class="pc pc-subj t-lilac" href="#/pisa">
-        <div class="top-row"><span class="sic">${icon('target', 22)}</span><span class="num">${last ? last.total : '—'}</span></div>
+        <div class="top-row"><span class="sic">${subjIcon('pisa')}</span><span class="num">${last ? last.total : '—'}</span></div>
         <h3>PISA</h3>
         <div class="pct">${last ? `${t('dash.pisaLast')}: ${last.total}` : t('dash.pisaNone')}</div>
         <div class="pring" style="--p:${Math.max(2, pisaP)}"><b>${last ? last.total : '—'}</b></div>
@@ -192,10 +192,10 @@ function upcoming() {
   const read = recs.find((tp) => tp.subject === 'reading') || TOPICS.find((tp) => tp.subject === 'reading');
   const today = fmtDate(Date.now(), { time: false });
   const events = {
-    16: { tint: 't-mint', icon: 'sigma', title: `${t('up.practice')}: ${loc(math)}`, href: `#/practice/${math.id}`, time: '16:00–16:30' },
-    17: { tint: 't-sky', icon: 'book', title: `${t('up.reading')}: ${loc(read)}`, href: `#/practice/${read.id}`, time: '17:00–17:30' },
-    18: { tint: 't-cream', icon: 'chat', title: t('up.ai'), href: '#/tutor', time: '18:00–18:20' },
-    19: { tint: 't-lilac', icon: 'target', title: t('up.pisa'), href: '#/pisa', time: '19:00–19:20' },
+    16: { tint: 't-mint', ic: subjIcon(math.subject), title: `${t('up.practice')}: ${loc(math)}`, href: `#/practice/${math.id}`, time: '16:00–16:30' },
+    17: { tint: 't-sky', ic: subjIcon('reading'), title: `${t('up.reading')}: ${loc(read)}`, href: `#/practice/${read.id}`, time: '17:00–17:30' },
+    18: { tint: 't-cream', ic: navIcon('chat'), title: t('up.ai'), href: '#/tutor', time: '18:00–18:20' },
+    19: { tint: 't-lilac', ic: navIcon('target'), title: t('up.pisa'), href: '#/pisa', time: '19:00–19:20' },
   };
   return `
     <section style="margin-top:34px">
@@ -204,7 +204,7 @@ function upcoming() {
         ${[15, 16, 17, 18, 19, 20].map((h) => {
           const e = events[h];
           return `<div class="tl-row"><span>${h}:00</span><div>${e ? `
-            <a class="ev ${e.tint}" href="${e.href}"><span class="ei">${icon(e.icon, 18)}</span>
+            <a class="ev ${e.tint}" href="${e.href}"><span class="ei">${e.ic}</span>
               <span><b>${esc(e.title)}</b><small>${esc(today)}, ${e.time}</small></span></a>` : ''}</div></div>`;
         }).join('')}
       </div>
