@@ -110,6 +110,8 @@ create policy "msg: mark read" on public.messages
 grant select, insert, update on public.users_public to authenticated;
 grant select, insert, update, delete on public.friendships to authenticated;
 grant select, insert, update on public.messages to authenticated;
+-- По умолчанию Supabase даёт вызывать функции всем, включая гостей (anon): закрываем
+revoke execute on function public.find_by_code(text), public.are_friends(uuid, uuid), public.has_link(uuid, uuid) from anon, public;
 grant execute on function public.find_by_code(text) to authenticated;
 grant execute on function public.are_friends(uuid, uuid) to authenticated;
 grant execute on function public.has_link(uuid, uuid) to authenticated;
