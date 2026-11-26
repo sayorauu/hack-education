@@ -20,7 +20,7 @@ const REC_SVG = {
   empty: '<svg viewBox="0 0 24 24"><path d="M10 2.5c.6 4.6 2.4 6.4 7 7-4.6.6-6.4 2.4-7 7-.6-4.6-2.4-6.4-7-7 4.6-.6 6.4-2.4 7-7z"/><path d="M18.5 13.5c.3 2.3 1.2 3.2 3.5 3.5-2.3.3-3.2 1.2-3.5 3.5-.3-2.3-1.2-3.2-3.5-3.5 2.3-.3 3.2-1.2 3.5-3.5z" opacity=".45"/></svg>',
 };
 const recIcon = (k) => `<span class="sicon rec-svg">${REC_SVG[k]}</span>`;
-import { renderLeague, renderGlobal } from './league.js';
+import { renderLeague, renderGlobal, leagueHero } from './league.js';
 import { authAvailable } from '../cloud/auth.js';
 
 export function renderLeaderboard() {
@@ -37,7 +37,7 @@ export function renderLeaderboard() {
 
   return `
     ${header(t('lb.title'), authAvailable() ? t('lb.subLeague') : t('lb.subMine'))}
-    ${authAvailable() ? renderLeague() + renderGlobal() : `<div class="lb-note page-enter">${icon('users', 20)}<span>${t('lb.alone')}</span></div>`}
+    ${authAvailable() ? leagueHero() + `<div class="lg-cols">${renderLeague()}${renderGlobal()}</div>` : `<div class="lb-note page-enter">${icon('users', 20)}<span>${t('lb.alone')}</span></div>`}
     ${authAvailable() ? `<div class="sec-head lb-mine-h"><h2>${t('lb.mineT')}</h2></div>` : ''}
     <div class="rec-row">
       ${stat('lilac', 'solved', fmt(p.attempts), t('lb.rSolved'))}

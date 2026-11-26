@@ -108,7 +108,7 @@ function activity() {
           ${rows.map((r) => {
             const tp = TOPIC_BY_ID[r.topic];
             return `<a class="act-row" href="#/topic/${tp.id}" data-text="${esc((loc(tp) + ' ' + r.text).toLowerCase())}">
-              <span class="act-dot ${r.correct ? 'ok' : 'bad'}">${icon(r.correct ? 'check' : 'cross', 18)}</span>
+              <span class="act-dot ${r.correct ? 'ok' : 'bad'}">${r.correct ? ACT_OK : ACT_BAD}</span>
               <span><b>${esc(loc(tp))}</b><small>${esc(r.text)}</small></span>
               <span><span class="when">${timeAgo(r.ago)}</span><br><small>${esc(subjName(tp.subject))}</small></span>
               <span class="go">${icon('chevR', 16)}</span>
@@ -209,6 +209,31 @@ function upcoming() {
         }).join('')}
       </div>
     </section>`;
+}
+
+// Итог ответа: «печать» с галочкой / крестиком (двухцветная, как иконки меню)
+const ACT_OK = '<svg class="act-svg" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" opacity=".22" d="M12 2.2l2.3 1.7 2.8-.2 1 2.6 2.5 1.3-.4 2.8 1.5 2.4-1.5 2.4.4 2.8-2.5 1.3-1 2.6-2.8-.2L12 21.8l-2.3-1.7-2.8.2-1-2.6-2.5-1.3.4-2.8L2.3 12l1.5-2.4-.4-2.8 2.5-1.3 1-2.6 2.8.2z"/><path d="m8 12.4 2.7 2.7L16.2 9.3" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const ACT_BAD = '<svg class="act-svg" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="7" fill="currentColor" opacity=".2"/><path d="M9 9l6 6M15 9l-6 6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>';
+
+/** При каждом заходе на главную: кольца наполняются, столбики растут, проценты «досчитываются». */
+export function animateDashboard(root = document) {
+  const m = root.querySelector('#main') || root;
+  m.classList.remove('dash-anim'); void m.offsetWidth; m.classList.add('dash-anim');
+  setTimeout(() => m.classList.remove('dash-anim'), 1800);
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  m.querySelectorAll('.pring b').forEach((b) => {
+    const txt = b.textContent.trim();
+    const mt = txt.match(/^(\d+)(%?)$/);
+    if (!mt) return;
+    const end = Number(mt[1]), suf = mt[2], t0 = performance.now(), D = 1100;
+    const tick = (now) => {
+      const k = Math.min(1, (now - t0) / D), e = 1 - Math.pow(1 - k, 3);
+      b.textContent = Math.round(end * e) + suf;
+      if (k < 1) requestAnimationFrame(tick);
+    };
+    b.textContent = '0' + suf;
+    requestAnimationFrame(tick);
+  });
 }
 
 export function renderDashboard() {

@@ -11,9 +11,11 @@ import { icon } from './icons.js';
 import { t, tf, LANGS } from '../i18n.js';
 import { getProfile, getSettings, update } from '../state.js';
 import { GRADES } from '../data/curriculum.js';
-import { esc, openModal, closeModal, kapiSvg } from './kit.js';
+import { esc, openModal, closeModal, kapiSvg, navIcon, coin } from './kit.js';
+import { rankSvg } from './levels.js';
 import { authAvailable, isLoggedIn } from '../cloud/auth.js';
 import { openAuth } from './auth.js';
+import { action as onAction } from './dom.js';
 
 /* ─── Мастер ──────────────────────────────────────────────────────────── */
 
@@ -121,16 +123,26 @@ export function registerOnboardingActions(action, rerender) {
 
 /* ─── Тур ─────────────────────────────────────────────────────────────── */
 
+// art: двухцветная иконка раздела (как в меню); isNew — пометка «Новое»
 const STEPS = [
-  { sel: null, k: 's0', ic: 'sparkles' },
-  { sel: '#pcards', k: 's1', ic: 'trend' },
-  { sel: '.rail a.nav[href="#/topics"]', k: 's2', ic: 'book' },
-  { sel: '.rail a.nav[href="#/tutor"]', k: 's3', ic: 'chat' },
-  { sel: '.rail a.nav[href="#/pisa"]', k: 's4', ic: 'target' },
-  { sel: '.coin-pill', k: 's5', ic: 'coin' },
-  { sel: null, k: 'sOff', ic: 'cloud' },
-  { sel: null, k: 's6', ic: 'play', final: true },
+  { sel: null, k: 's0', art: 'bear' },
+  { sel: '#pcards', k: 's1', art: 'home' },
+  { sel: '.rail a.nav[href="#/topics"]', k: 's2', art: 'book' },
+  { sel: '.rail a.nav[href="#/tutor"]', k: 's3', art: 'chat' },
+  { sel: '.rail a.nav[href="#/pisa"]', k: 's4', art: 'target', isNew: true },
+  { sel: '.rail a.nav[href="#/leaderboard"]', k: 'sLb', art: 'trophy', isNew: true },
+  { sel: '.rail a.nav[href="#/friends"]', k: 'sFr', art: 'users', isNew: true },
+  { sel: '.rail-user', k: 'sLvl', art: 'rank', isNew: true },
+  { sel: '.coin-pill', k: 's5', art: 'coin' },
+  { sel: null, k: 'sOff', art: 'cloud' },
+  { sel: null, k: 's6', art: 'bear', final: true },
 ];
+
+const artHtml = (a) => a === 'bear' ? `<span class="tour-bear">${kapiSvg()}</span>`
+  : a === 'rank' ? `<span class="tour-art rank" style="--lh:235">${rankSvg(4)}</span>`
+  : a === 'coin' ? `<span class="tour-art t-cream">${coin(26)}</span>`
+  : a === 'cloud' ? `<span class="tour-art t-sky">${icon('cloud', 22)}</span>`
+  : `<span class="tour-art">${navIcon(a)}</span>`;
 
 let T = null;
 
@@ -149,6 +161,8 @@ export function startTour(rerender) {
     else if (a === 'prev') step(-1);
     else if (a === 'skip') endTour(true);
     else if (a === 'go') { endTour(true); location.hash = `#/topics?g=${getProfile().grade}`; }
+    else if (a === 'go-pisa') { endTour(true); location.hash = '#/pisa'; }
+    else if (a === 'go-friends') { endTour(true); location.hash = '#/friends'; }
   });
   T.onKey = (e) => { if (e.key === 'Escape') endTour(true); if (e.key === 'ArrowRight') step(1); if (e.key === 'ArrowLeft') step(-1); };
   T.onResize = () => place();
@@ -180,21 +194,27 @@ function show() {
   if (el) el.scrollIntoView({ block: 'center', behavior: 'smooth' });
   const card = T.root.querySelector('.tour-card');
   const name = esc(getProfile().name || '');
+  const pct = Math.round(((T.i + 1) / STEPS.length) * 100);
   card.innerHTML = `
     <div class="tour-anim">
-      <div class="tour-top"><span class="tour-bear">${kapiSvg()}</span>
-        <span class="tour-ic">${icon(s.ic, 16)}</span><span class="tour-count">${T.i + 1} / ${STEPS.length}</span></div>
+      <div class="tour-top">${artHtml(s.art)}
+        ${s.isNew ? `<span class="tour-new">${icon('sparkles', 12)} ${t('tour.new')}</span>` : ''}
+        <span class="tour-count">${T.i + 1} / ${STEPS.length}</span></div>
       <h3>${tf('tour.' + s.k + 'T', { name })}</h3>
       <p>${tf('tour.' + s.k + 'B', { name })}</p>
-      <div class="tour-dots">${STEPS.map((_, i) => `<i class="${i === T.i ? 'now' : ''}"></i>`).join('')}</div>
+      ${s.final ? `<div class="tour-pick">
+          <button class="tour-opt" data-tour="go">${navIcon('book')}<span><b>${t('tour.goTopic')}</b><small>${t('tour.goTopicB')}</small></span></button>
+          <button class="tour-opt" data-tour="go-pisa">${navIcon('target')}<span><b>${t('tour.goPisa')}</b><small>${t('tour.goPisaB')}</small></span></button>
+          <button class="tour-opt" data-tour="go-friends">${navIcon('users')}<span><b>${t('tour.goFriends')}</b><small>${t('tour.goFriendsB')}</small></span></button>
+        </div>` : ''}
+      <div class="tour-prog"><i style="width:${pct}%"></i></div>
       <div class="tour-btns">
-        ${s.final ? '' : `<button class="tour-skip" data-tour="skip">${t('tour.skip')}</button>`}
+        ${s.final ? `<button class="tour-skip" data-tour="skip">${t('tour.later')}</button>` : `<button class="tour-skip" data-tour="skip">${t('tour.skip')}</button>`}
         <span style="flex:1"></span>
-        ${T.i > 0 && !s.final ? `<button class="btn btn-soft btn-sm" data-tour="prev">${icon('arrowLeft', 14)}</button>` : ''}
-        ${s.final
-          ? `<button class="btn btn-sm" data-tour="go">${t('tour.go')} ${icon('arrowRight', 14)}</button>`
-          : `<button class="btn btn-sm" data-tour="next">${T.i === 0 ? t('tour.begin') : t('tour.next')} ${icon('arrowRight', 14)}</button>`}
+        ${T.i > 0 ? `<button class="btn btn-soft btn-sm" data-tour="prev" aria-label="${esc(t('ft.prev'))}">${icon('arrowLeft', 14)}</button>` : ''}
+        ${s.final ? '' : `<button class="btn btn-sm" data-tour="next">${T.i === 0 ? t('tour.begin') : t('tour.next')} ${icon('arrowRight', 14)}</button>`}
       </div>
+      ${T.i === 0 ? `<p class="tour-keys">${t('tour.keys')}</p>` : ''}
     </div>`;
   // Позицию считаем после прокрутки к элементу
   setTimeout(place, el ? 350 : 0);
@@ -244,6 +264,35 @@ function endTour(markDone) {
   const root = T.root;
   root.classList.remove('on');
   setTimeout(() => root.remove(), 300);
-  if (markDone) update((s) => { s.profile.tourDone = true; });
+  if (markDone) update((s) => { s.profile.tourDone = true; s.profile.newsSeen = NEWS_VER; }); // тур уже показал все новинки
   T = null;
+}
+
+/* ─── «Что нового» для тех, кто уже проходил тур ──────────────────────── */
+
+export const NEWS_VER = 2;
+const NEWS = [
+  { art: 'trophy', k: 'n1' }, { art: 'users', k: 'n2' }, { art: 'rank', k: 'n3' },
+  { art: 'target', k: 'n4' }, { art: 'user', k: 'n5' }, { art: 'hint', k: 'n6' },
+];
+
+export function maybeWhatsNew(rerender) {
+  const p = getProfile();
+  if (!p.onboarded || !p.tourDone || (p.newsSeen || 0) >= NEWS_VER) return;
+  setTimeout(() => {
+    if (document.querySelector('#modalRoot .sheet') || document.querySelector('.tour')) return;
+    openModal(`<div class="wn">
+        <span class="wn-kicker">${icon('sparkles', 14)} ${t('wn.kicker')}</span>
+        <h2>${t('wn.title')}</h2>
+        <div class="wn-grid">${NEWS.map((n) => `<div class="wn-item">${n.art === 'rank' ? `<span class="tour-art rank" style="--lh:235">${rankSvg(4)}</span>` : n.art === 'hint' ? `<span class="tour-art">${icon('hint', 20)}</span>` : `<span class="tour-art">${navIcon(n.art)}</span>`}
+          <span><b>${t('wn.' + n.k + 'T')}</b><small>${t('wn.' + n.k + 'B')}</small></span></div>`).join('')}</div>
+        <div class="q-actions" style="justify-content:flex-end">
+          <button class="btn btn-soft" data-act="wn-tour">${icon('play', 14)} ${t('wn.tour')}</button>
+          <button class="btn" data-act="wn-ok">${t('wn.ok')}</button>
+        </div>
+      </div>`, { onClose: () => update((s) => { s.profile.newsSeen = NEWS_VER; }) });
+    document.querySelector('#modalRoot .sheet')?.classList.add('wn-sheet');
+  }, 900);
+  onAction('wn-ok', () => closeModal());
+  onAction('wn-tour', () => { closeModal(); location.hash = '#/'; rerender(); setTimeout(() => startTour(rerender), 300); });
 }

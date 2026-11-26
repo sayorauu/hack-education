@@ -20,7 +20,7 @@ import { authAvailable, isLoggedIn, myId } from '../cloud/auth.js';
 import { loadFriends, sendMessage, thanksSince, socialErrorKey, weeklyTop, myWeeklyRank } from '../cloud/social.js';
 import { ITEM_BY_ID, ITEMS_BY_TOPIC, TOPIC_BY_ID, PASSAGES } from '../data/curriculum.js';
 import { esc, fmt, openModal, closeModal, photoAva } from './kit.js';
-import { levelBadge } from './levels.js';
+import { levelBadge, rankSvg as rankSvgSmall } from './levels.js';
 import { action, toast } from './dom.js';
 
 let rerenderRef = () => {};
@@ -114,6 +114,50 @@ function claimPrevWeek(friends) {
 
 const MEDAL = ['gold', 'silver', 'bronze'];
 
+/** Пьедестал для первых трёх: 2 · 1 · 3, у первого — корона. */
+function podium(top) {
+  if (!top.length) return '';
+  const order = [top[1], top[0], top[2]];
+  return `<div class="podium">${order.map((r, k) => {
+    if (!r) return '<div class="pd-slot empty"></div>';
+    const place = r.place || (k === 1 ? 1 : k === 0 ? 2 : 3);
+    return `<div class="pd-slot p${place} ${r.me ? 'me' : ''}">
+      <div class="pd-who">${place === 1 ? `<span class="pd-crown">${icon('trophy', 16)}</span>` : ''}${photoAva({ id: r.id, name: r.name, avatar: r.avatar }, place === 1 ? 64 : 52)}
+        <b>${esc(r.name)}</b>${r.me ? `<em>${t('lb.you')}</em>` : r.lvl ? levelBadge(r.lvl, false) : r.grade ? `<small>${tf('common.grade', { n: r.grade })}</small>` : ''}
+        <span class="pd-pts">${fmt(r.pts)} <small>${t('lg.pts')}</small></span></div>
+      <div class="pd-step"><span>${place}</span></div>
+    </div>`;
+  }).join('')}</div>`;
+}
+
+/** Сводка недели вверху «Рейтинга». */
+export function leagueHero() {
+  if (!authAvailable() || !isLoggedIn()) return '';
+  const v = leagueView();
+  const p = getProfile();
+  const L = levelInfo(p);
+  let friendPlace = '—';
+  if (LG.list) {
+    const pts = [v.pts, ...LG.list.map((f) => ptsOf(f.card.stats, v.week))].sort((a, b) => b - a);
+    friendPlace = `${pts.indexOf(v.pts) + 1}<small>/${pts.length}</small>`;
+  }
+  const globalPlace = GL.me?.place ? `${GL.me.place}<small>/${GL.me.total}</small>` : '—';
+  const chip = (cls, ic, val, lbl) => `<div class="lbh-stat ${cls}"><span class="lbh-ic">${ic}</span><b>${val}</b><small>${lbl}</small></div>`;
+  return `<section class="lb-hero">
+    <div class="lbh-main">
+      <span class="lbh-kicker">${icon('calendar', 14)} ${tf('lg.left', { n: daysLeftInWeek() })}</span>
+      <div class="lbh-pts"><b>${fmt(v.pts)}</b><span>${t('lbh.ptsWeek')}</span></div>
+      <p>${tf('lbh.prize', { n: fmt(LEAGUE.globalPrize) })}</p>
+    </div>
+    <div class="lbh-grid">
+      ${chip('c1', icon('users', 18), friendPlace, t('lbh.inFriends'))}
+      ${chip('c2', icon('graph', 18), globalPlace, t('lbh.inAll'))}
+      ${chip('c3', `<span class="lbh-rank" style="--lh:${[150, 190, 210, 235, 260, 285, 315, 340, 18, 45][L.lvl - 1]}">${rankSvgSmall(L.lvl)}</span>`, esc(t('lvl.n' + L.lvl)), tf('lbh.level', { n: L.lvl }))}
+      ${chip('c4', icon('coin', 18), fmt(p.coins), t('lbh.coins'))}
+    </div>
+  </section>`;
+}
+
 export function renderLeague() {
   if (!authAvailable()) return '';
   const how = `<button class="btn btn-soft btn-sm" data-act="fr-tour" data-id="1">${icon('hint', 14)} ${t('ft.how')}</button>`;
@@ -168,7 +212,8 @@ export function renderLeague() {
     ${head(sub)}
     ${lastBanner}
     ${LG.list.length ? gap : ''}
-    <ol class="lg-list">${rows.map(row).join('')}</ol>
+    ${rows.length > 1 ? podium(rows.slice(0, 3).map((r, i) => ({ ...r, place: i + 1 }))) : ''}
+    ${rows.length > 3 || rows.length === 1 ? `<ol class="lg-list" start="${rows.length === 1 ? 1 : 4}">${rows.slice(rows.length === 1 ? 0 : 3).map((r, i) => row(r, i + (rows.length === 1 ? 0 : 3))).join('')}</ol>` : ''}
     ${LG.list.length ? '' : `<div class="lg-empty">${icon('users', 22)}<span>${t('lg.noFriends')}</span><a class="btn btn-sm" href="#/friends">${t('lg.addFriends')}</a></div>`}
     <div class="lg-rules">
       <span>${icon('check', 13)} ${t('lg.r1')}</span>
@@ -229,7 +274,7 @@ export function renderGlobal() {
     const name = mine ? (p.name || t('lb.you')) : (r.name || t('fr.noName'));
     return `<li class="lg-row ${mine ? 'me' : ''}">
       <span class="lg-rank ${MEDAL[r.place - 1] || ''}">${r.place}</span>
-      ${photoAva({ id: r.id, name }, 38)}
+      ${photoAva({ id: r.id, name, avatar: mine ? p.avatar : null }, 38)}
       <span class="lg-name"><b>${esc(name)}${mine ? ` <em>${t('lb.you')}</em>` : ''}</b><small>${r.grade ? tf('common.grade', { n: r.grade }) : ''}</small></span>
       <span class="lg-pts"><b>${fmt(r.pts)}</b><small>${t('lg.pts')}</small></span>
     </li>`;
@@ -245,7 +290,7 @@ export function renderGlobal() {
     ${head}
     ${lastWin}
     ${gap}
-    ${GL.top.length ? `<ol class="lg-list">${GL.top.map(row).join('')}</ol>` : `<div class="lg-empty">${icon('sparkles', 22)}<span>${t('gl.empty')}</span></div>`}
+    ${GL.top.length ? podium(GL.top.slice(0, 3).map((r) => (r.id === me ? { ...r, name: p.name || t('lb.you'), avatar: p.avatar, me: true } : r))) + (GL.top.length > 3 ? `<ol class="lg-list">${GL.top.slice(3).map(row).join('')}</ol>` : '') : `<div class="lg-empty">${icon('sparkles', 22)}<span>${t('gl.empty')}</span></div>`}
     ${!inTop ? `<div class="gl-me">${GL.me?.place ? tf('gl.myPlace', { r: GL.me.place, of: GL.me.total, n: fmt(GL.me.pts) }) : t('gl.notYet')}</div>` : ''}
     <p class="note gl-note">${icon('shield', 13)} ${t('gl.privacy')}</p>
   </section>`;

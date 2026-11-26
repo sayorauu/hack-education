@@ -6,7 +6,7 @@ import { initDelegation, action, toast } from './ui/dom.js';
 import { getProfile, getSettings, update } from './state.js';
 import { t } from './i18n.js';
 import { renderRail, switchTheme, switchLang, closeModal } from './ui/kit.js';
-import { renderDashboard, registerDashboardActions } from './ui/dashboard.js';
+import { renderDashboard, registerDashboardActions, animateDashboard } from './ui/dashboard.js';
 import { renderTopics, renderTopic, bindTopicSearch } from './ui/topics.js';
 import { renderPractice, registerPracticeActions } from './ui/practice.js';
 import { renderLeaderboard, registerLeaderboardActions } from './ui/leaderboard.js';
@@ -14,7 +14,7 @@ import { renderPisa, registerPisaActions, animatePisa, pisaActive, confirmLeaveP
 import { renderWallet, registerWalletActions, bindWalletInputs } from './ui/wallet.js';
 import { renderTutor, registerTutorActions, seedTutorQuestion, flushPending } from './ui/tutor.js';
 import { renderProfile, registerProfileActions, bindChipRadios } from './ui/profile.js';
-import { showOnboarding, registerOnboardingActions } from './ui/onboarding.js';
+import { showOnboarding, registerOnboardingActions, maybeWhatsNew } from './ui/onboarding.js';
 import { renderAdmin, registerAdminActions } from './ui/admin.js';
 import { initAuth, onAuthChange, takeOAuthResult } from './cloud/auth.js';
 import { canUse, openAuth, registerAuthActions } from './ui/auth.js';
@@ -86,7 +86,7 @@ function render() {
     const el = document.getElementById(keepId);
     if (el) { el.focus(); if (caret !== null && el.setSelectionRange) try { el.setSelectionRange(caret, caret); } catch { /* не текстовое поле */ } }
   }
-  if (path !== lastPath) { window.scrollTo({ top: 0 }); lastPath = path; }
+  if (path !== lastPath) { window.scrollTo({ top: 0 }); if (path === '/' || path === '') requestAnimationFrame(() => animateDashboard()); lastPath = path; }
   if (path.startsWith('/pisa')) animatePisa();
   if (path.startsWith('/tutor')) flushPending(render);
 }
@@ -148,6 +148,7 @@ window.addEventListener('hashchange', () => {
 
 render();
 if (!getProfile().onboarded) showOnboarding(render);
+else maybeWhatsNew(render);
 // Аккаунт: загружаем настройки Supabase и сессию, при входе/выходе перерисовываем
 initAuth().then(() => {
   // Вернулись от Google: закрываем анкету (профиль пришёл из облака) и сообщаем результат
