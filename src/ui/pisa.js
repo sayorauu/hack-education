@@ -4,6 +4,7 @@ import { getProfile, recordPisa, COINS } from '../state.js';
 import { PISA_ITEMS, PISA_STIMULI, PISA_AVG, scorePisa } from '../data/pisa.js';
 import { header, esc, coinBurst, openModal, closeModal, kapiSvg } from './kit.js';
 import { action } from './dom.js';
+import { requireAuth } from './auth.js';
 
 let P = { phase: 'intro', idx: 0, answers: {}, result: null, t0: 0 };
 
@@ -145,6 +146,7 @@ export function registerPisaActions(rerender) {
   // Перед тестом — короткая загрузка (~2,6 с): ученик успевает настроиться
   action('pisa-start', () => {
     if (P.phase === 'loading') return;
+    if (!requireAuth('auth.rPisa')) return;
     P = { phase: 'loading', idx: 0, answers: {}, result: null, t0: 0 };
     rerender(); window.scrollTo({ top: 0 });
     setTimeout(() => {

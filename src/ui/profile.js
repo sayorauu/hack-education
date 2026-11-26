@@ -4,12 +4,14 @@ import { getProfile, getSettings, update, resetAll } from '../state.js';
 import { GRADES } from '../data/curriculum.js';
 import { header, esc, openModal, closeModal, switchLang, switchTheme, fmt, coin } from './kit.js';
 import { action, toast } from './dom.js';
+import { accountPanel } from './auth.js';
 
 export function renderProfile() {
   const p = getProfile();
   const s = getSettings();
   return `
     ${header(t('profile.title'), t('profile.sub'))}
+    ${accountPanel()}
     <nav class="menu-links mobile-only">
       <a href="#/leaderboard"><span class="ml-ic t-sky">${icon('trophy', 20)}</span><b>${t('nav.leaderboard')}</b>${icon('chevR', 18)}</a>
       <a href="#/wallet"><span class="ml-ic t-cream">${coin(24)}</span><b>${t('nav.wallet')}</b><span class="ml-val">${fmt(p.coins)}</span>${icon('chevR', 18)}</a>

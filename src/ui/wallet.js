@@ -12,6 +12,7 @@ import { t, tf, fmtDate } from '../i18n.js';
 import { getProfile, requestPayout, COINS } from '../state.js';
 import { header, esc, fmt, openModal, closeModal, coin } from './kit.js';
 import { action } from './dom.js';
+import { requireAuth } from './auth.js';
 
 /* Куда переводим: на карту или по номеру телефона. Банки — только названием,
    без логотипов и фирменных цветов: перевод демонстрационный. */
@@ -195,6 +196,7 @@ export function registerWalletActions(rerender) {
   action('pay-method', ({ id }) => { if (method !== id) { method = id; num = ''; } rerender(); });
   action('pay-bank', ({ id }) => { bank = id; rerender(); });
   action('pay-send', () => {
+    if (!requireAuth('auth.rWallet')) return;
     if (!numState(num).ok) return;
     const rec = requestPayout(amount, method, { bank, to: maskNum(num) });
     if (!rec) return;

@@ -18,3 +18,8 @@ create policy "own profile: insert" on public.profiles
   for insert with check (auth.uid() = id);
 create policy "own profile: update" on public.profiles
   for update using (auth.uid() = id);
+
+-- Права для вошедших пользователей (RLS выше всё равно пускает только к своей строке).
+-- Если проект создан без автоматической выдачи прав, без этой строки прогресс
+-- не сохранится в облако. Безопасно запускать повторно.
+grant select, insert, update on public.profiles to authenticated;

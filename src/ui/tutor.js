@@ -8,6 +8,7 @@ import {
 } from '../engine/localllm.js';
 import { TOPIC_BY_ID } from '../data/curriculum.js';
 import { header, esc, kapiSvg } from './kit.js';
+import { canUse, requireAuth, openAuth } from './auth.js';
 import { action, md, toast } from './dom.js';
 
 /**
@@ -152,6 +153,7 @@ export function renderTutor() {
           ${busy ? `<div class="brow thinking">${kapiAva('think')}<div class="msg bot" id="pendingMsg"><span class="typing"><i></i><i></i><i></i></span><span class="think-txt" id="thinkTxt"></span></div></div>` : ''}
         </div>
         <div class="chips" style="margin-top:12px">${['q1', 'q2', 'q3', 'q4'].map((k) => `<button class="chip" data-act="tutor-suggest" data-q="${esc(t('tutor.' + k))}" ${busy ? 'disabled' : ''}>${esc(t('tutor.' + k))}</button>`).join('')}</div>
+        ${canUse() ? '' : `<div class="guest-note">${icon('lock', 16)}<span>${t('auth.rTutor')}</span><button class="btn btn-sm" data-act="auth-open" data-id="signup">${t('auth.tabSignup')}</button></div>`}
         <form class="chat-form" data-act="tutor-send">
           <label class="search">${icon('chat', 18)}<input name="q" id="tutorInput" placeholder="${esc(t('tutor.placeholder'))}" autocomplete="off" ${busy ? 'disabled' : ''}></label>
           ${SpeechRec ? `<button class="btn btn-soft btn-round mic-btn" type="button" id="micBtn" data-act="voice" aria-label="${esc(t('voice.start'))}" ${busy ? 'disabled' : ''}>${icon('mic', 18)}</button>` : ''}
@@ -216,6 +218,7 @@ async function ask(text, rerender) {
 
 export function flushPending(rerender) {
   if (!pending || busy) return;
+  if (!canUse()) { pending = null; history.replaceState(null, '', '#/tutor'); setTimeout(() => openAuth('signup', 'auth.rTutor'), 0); return; }
   const q = pending; pending = null;
   if (location.hash.includes('?')) history.replaceState(null, '', '#/tutor');
   ask(pendingRaw ? q : tf('tutor.explainTopic', { q }), rerender);
@@ -223,6 +226,7 @@ export function flushPending(rerender) {
 
 export function registerTutorActions(rerender) {
   action('tutor-send', (_d, form) => {
+    if (!requireAuth('auth.rTutor')) return;
     const input = form.querySelector('input');
     const v = input.value.trim();
     if (!v) return;
@@ -230,8 +234,8 @@ export function registerTutorActions(rerender) {
     input.value = '';
     ask(v, rerender);
   });
-  action('voice', () => (listening ? stopVoice() : startVoice(rerender)));
-  action('tutor-suggest', ({ q }) => ask(q, rerender));
+  action('voice', () => { if (!requireAuth('auth.rTutor')) return; listening ? stopVoice() : startVoice(rerender); });
+  action('tutor-suggest', ({ q }) => { if (requireAuth('auth.rTutor')) ask(q, rerender); });
   action('ai-mode', ({ id }) => {
     update((s) => { s.settings.aiMode = id; });
     toast(t({ auto: 'tutor.autoOn', local: 'local.on', offline: 'tutor.offlineOn' }[id]));

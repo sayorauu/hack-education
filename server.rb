@@ -222,7 +222,12 @@ server.mount_proc('/api/admin') do |req, res|
   end
 end
 server.mount_proc('/api/config') do |_req, res|
-  json(res, 200, supabase: nil, features: { auth: false, tutor: !gemini_key.nil? })
+  env = load_env
+  url = (ENV['SUPABASE_URL'] || env['SUPABASE_URL']).to_s.strip
+  anon = (ENV['SUPABASE_ANON_KEY'] || env['SUPABASE_ANON_KEY']).to_s.strip
+  supa = url.empty? || anon.empty? ? nil : { url: url, anonKey: anon }
+  res['Cache-Control'] = 'no-store'
+  json(res, 200, supabase: supa, features: { auth: !supa.nil?, tutor: !gemini_key.nil? })
 end
 
 trap('INT') { server.shutdown }

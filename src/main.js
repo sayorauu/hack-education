@@ -16,6 +16,8 @@ import { renderTutor, registerTutorActions, seedTutorQuestion, flushPending } fr
 import { renderProfile, registerProfileActions, bindChipRadios } from './ui/profile.js';
 import { showOnboarding, registerOnboardingActions } from './ui/onboarding.js';
 import { renderAdmin, registerAdminActions } from './ui/admin.js';
+import { initAuth, onAuthChange } from './cloud/auth.js';
+import { canUse, openAuth, registerAuthActions } from './ui/auth.js';
 
 const main = document.getElementById('main');
 const rail = document.getElementById('rail');
@@ -32,7 +34,14 @@ function view(path, params) {
     case undefined: return renderDashboard();
     case 'topics': return renderTopics(params);
     case 'topic': return renderTopic(seg[1]);
-    case 'practice': return renderPractice(seg[1]);
+    case 'practice':
+      // Гость видит тему, но решать задания — только после входа
+      if (!canUse()) {
+        history.replaceState(null, '', '#/topic/' + seg[1]);
+        setTimeout(() => openAuth('signup', 'auth.rPractice'), 0);
+        return renderTopic(seg[1]);
+      }
+      return renderPractice(seg[1]);
     case 'leaderboard': return renderLeaderboard();
     case 'pisa': return renderPisa();
     case 'wallet': return renderWallet();
@@ -90,6 +99,7 @@ registerPisaLeave();
 registerWalletActions(render);
 registerTutorActions(render);
 registerProfileActions(render);
+registerAuthActions(render);
 registerOnboardingActions(action, render);
 registerAdminActions(render);
 
@@ -122,6 +132,9 @@ window.addEventListener('hashchange', () => {
 
 render();
 if (!getProfile().onboarded) showOnboarding(render);
+// Аккаунт: загружаем настройки Supabase и сессию, при входе/выходе перерисовываем
+initAuth().then(() => render());
+onAuthChange(() => render());
 
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
   navigator.serviceWorker.register('sw.js').catch(() => { /* офлайн-режим просто не включится */ });

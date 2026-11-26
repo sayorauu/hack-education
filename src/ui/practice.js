@@ -4,6 +4,7 @@ import { getProfile, recordAttempt, awardCoins, COINS } from '../state.js';
 import { TOPIC_BY_ID, ITEMS_BY_TOPIC, PASSAGES, TOPICS } from '../data/curriculum.js';
 import { header, esc, coinBurst, subjName, openModal, closeModal } from './kit.js';
 import { action, toast } from './dom.js';
+import { requireAuth } from './auth.js';
 
 let S = null; // текущая сессия практики
 
@@ -130,7 +131,11 @@ export function registerPracticeActions(rerender) {
       </div>`);
   });
   action('word-close', () => closeModal());
-  action('word-ask', (_d, el) => { closeModal(); location.hash = el.getAttribute('href'); });
+  action('word-ask', (_d, el) => {
+    const href = el.getAttribute('href');
+    closeModal();
+    if (requireAuth('auth.rTutor')) location.hash = href;
+  });
   // Слово можно выбрать и с клавиатуры
   document.addEventListener('keydown', (e) => {
     if ((e.key === 'Enter' || e.key === ' ') && e.target?.classList?.contains('pw')) { e.preventDefault(); e.target.click(); }

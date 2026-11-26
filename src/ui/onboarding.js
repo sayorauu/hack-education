@@ -12,6 +12,8 @@ import { t, tf, LANGS } from '../i18n.js';
 import { getProfile, getSettings, update } from '../state.js';
 import { GRADES } from '../data/curriculum.js';
 import { esc, openModal, closeModal, kapiSvg } from './kit.js';
+import { authAvailable, isLoggedIn } from '../cloud/auth.js';
+import { openAuth } from './auth.js';
 
 /* ─── Мастер ──────────────────────────────────────────────────────────── */
 
@@ -109,7 +111,10 @@ export function registerOnboardingActions(action, rerender) {
     closeModal();
     location.hash = '#/';
     rerender();
-    setTimeout(() => startTour(rerender), 450);
+    // Сразу предлагаем создать аккаунт (можно «просто посмотреть»), потом — тур
+    const tour = () => setTimeout(() => startTour(rerender), 350);
+    if (authAvailable() && !isLoggedIn()) setTimeout(() => openAuth('signup', 'auth.rWelcome', tour), 300);
+    else tour();
   });
   action('tour-again', () => { location.hash = '#/'; rerender(); setTimeout(() => startTour(rerender), 300); });
 }

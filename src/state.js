@@ -88,6 +88,14 @@ export function update(mutator) { mutator(state); emit(); }
 
 export function setLang(l) { if (l === 'kk' || l === 'ru') update((s) => { s.settings.lang = l; }); }
 
+/** Подставить профиль из облака (после входа на новом устройстве). */
+export function replaceProfile(p) {
+  const d = defaultState().profile;
+  state.profile = { ...d, ...p };
+  state.profile.coins = Math.min(COINS.maxBalance, Math.max(0, Number(state.profile.coins) || 0));
+  emit();
+}
+
 export function resetAll() {
   const settings = state.settings;
   state = defaultState();
