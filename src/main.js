@@ -2,7 +2,7 @@
  * NASstudy — точка входа: маршрутизатор, общие действия, оболочка.
  */
 
-import { initDelegation, action } from './ui/dom.js';
+import { initDelegation, action, toast } from './ui/dom.js';
 import { getProfile, getSettings, update } from './state.js';
 import { t } from './i18n.js';
 import { renderRail, switchTheme, switchLang, closeModal } from './ui/kit.js';
@@ -16,7 +16,7 @@ import { renderTutor, registerTutorActions, seedTutorQuestion, flushPending } fr
 import { renderProfile, registerProfileActions, bindChipRadios } from './ui/profile.js';
 import { showOnboarding, registerOnboardingActions } from './ui/onboarding.js';
 import { renderAdmin, registerAdminActions } from './ui/admin.js';
-import { initAuth, onAuthChange } from './cloud/auth.js';
+import { initAuth, onAuthChange, takeOAuthResult } from './cloud/auth.js';
 import { canUse, openAuth, registerAuthActions } from './ui/auth.js';
 
 const main = document.getElementById('main');
@@ -133,7 +133,13 @@ window.addEventListener('hashchange', () => {
 render();
 if (!getProfile().onboarded) showOnboarding(render);
 // Аккаунт: загружаем настройки Supabase и сессию, при входе/выходе перерисовываем
-initAuth().then(() => render());
+initAuth().then(() => {
+  // Вернулись от Google: закрываем анкету (профиль пришёл из облака) и сообщаем результат
+  const r = takeOAuthResult();
+  if (r === 'ok') { if (getProfile().onboarded) closeModal(); toast(t('auth.loggedIn')); }
+  if (r === 'error') toast(t('auth.errGoogle'));
+  render();
+});
 onAuthChange(() => render());
 
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {

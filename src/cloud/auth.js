@@ -187,9 +187,62 @@ function schedulePush() {
   }, 2500);
 }
 
+/* ─── Вход через Google (провайдер включается в Supabase) ─────────────── */
+
+const GOOGLE_KEY = 'nasstudy.google';
+let googleOn = readJson(GOOGLE_KEY) === true;
+export const googleEnabled = () => authAvailable() && googleOn;
+
+/** Узнаём у Supabase, включён ли Google (кэшируем для офлайна). */
+async function loadProviders() {
+  if (!authAvailable() || !navigator.onLine) return;
+  try {
+    const s = await api('/auth/v1/settings');
+    googleOn = Boolean(s?.external?.google);
+    writeJson(GOOGLE_KEY, googleOn);
+  } catch { /* оставляем кэш */ }
+}
+
+/** Переход на страницу Google; Supabase вернёт ученика обратно с токенами в адресе. */
+export function googleSignIn() {
+  if (!authAvailable()) return;
+  const back = location.origin + location.pathname;
+  location.href = `${cfg.url}/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent(back)}`;
+}
+
+/**
+ * Возврат от Google: в адресе «#access_token=…&refresh_token=…».
+ * Забираем токены, сразу убираем их из адреса и истории.
+ * Возвращает 'ok', 'error' или null (если это не возврат от Google).
+ */
+async function handleOAuthReturn() {
+  const h = location.hash.replace(/^#/, '');
+  if (!/(^|&)(access_token|error)=/.test(h)) return null;
+  const q = new URLSearchParams(h);
+  history.replaceState(null, '', location.pathname + '#/');
+  if (q.get('error')) return 'error';
+  const access = q.get('access_token');
+  try {
+    const user = await api('/auth/v1/user', { token: access });
+    setSession({ access_token: access, refresh_token: q.get('refresh_token'), expires_in: Number(q.get('expires_in')) || 3600, user });
+    await afterLogin();
+    return 'ok';
+  } catch {
+    return 'error';
+  }
+}
+
+let oauthResult = null;
+/** Результат возврата от Google (один раз), чтобы показать сообщение. */
+export function takeOAuthResult() { const r = oauthResult; oauthResult = null; return r; }
+
 export async function initAuth() {
   session = readJson(SES_KEY);
   await loadCloudConfig();
+  if (authAvailable()) {
+    oauthResult = await handleOAuthReturn();
+    loadProviders().then(() => emitAuth());
+  }
   subscribe(schedulePush);
   window.addEventListener('online', () => { if (isLoggedIn()) schedulePush(); });
   if (isLoggedIn() && navigator.onLine) token().then(() => schedulePush());
