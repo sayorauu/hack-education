@@ -17,6 +17,7 @@
       var th = (s && s.settings && s.settings.theme) || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
       document.documentElement.dataset.theme = th;
       if (s && s.settings && s.settings.lang) document.documentElement.lang = s.settings.lang;
+      document.documentElement.dataset.rail = (s && s.settings && s.settings.railOpen === false) ? 'closed' : 'open';
     } catch (e) {}
   </script>
 </head>

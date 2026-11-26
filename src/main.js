@@ -3,7 +3,7 @@
  */
 
 import { initDelegation, action } from './ui/dom.js';
-import { getProfile, getSettings } from './state.js';
+import { getProfile, getSettings, update } from './state.js';
 import { t } from './i18n.js';
 import { renderRail, switchTheme, switchLang, closeModal } from './ui/kit.js';
 import { renderDashboard, registerDashboardActions } from './ui/dashboard.js';
@@ -73,6 +73,7 @@ function render() {
 
 action('theme', (_d, el) => switchTheme(el, render));
 action('lang', ({ id }) => switchLang(id, render));
+action('rail-toggle', () => { update((s) => { s.settings.railOpen = s.settings.railOpen === false; }); render(); });
 
 registerDashboardActions(render);
 registerPracticeActions(render);

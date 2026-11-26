@@ -981,3 +981,47 @@ html[lang='kk'] .glyph.num i::after { content: ' сын'; }
 [data-theme='dark'] .demo-banner { background: rgba(242, 163, 58, 0.12); border-color: rgba(242, 163, 58, 0.6); color: #ffd59a; }
 .max-row { color: var(--dim); font-weight: 600; }
 .max-note { margin-top: 10px; padding: 10px 14px; border-radius: 12px; background: var(--cream); color: var(--cream-ink); font-size: 13px; font-weight: 600; }
+
+/* ─── Каркас на весь экран + сворачиваемое меню ───────────────────────── */
+:root { --rail-w: 96px; }
+html[data-rail='open'] { --rail-w: 236px; }
+.app {
+  max-width: none; margin: 0; min-height: 100dvh; border-radius: 0; box-shadow: none;
+  grid-template-columns: var(--rail-w) minmax(0, 1fr);
+  transition: grid-template-columns 0.35s var(--ease), background 0.4s var(--ease);
+}
+[data-theme='dark'] .app { box-shadow: none; }
+.rail { top: 0; height: 100dvh; padding: 26px 0 22px; border-right: 1px solid var(--line); background: var(--app); overflow: hidden; }
+.main { padding: 34px 44px 44px 40px; }
+.rail-head { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.rail-head .rail-logo { margin: 0; flex: none; }
+.rail-brand { display: none; font-size: 19px; font-weight: 750; letter-spacing: -0.02em; white-space: nowrap; }
+.rail-toggle { width: 34px; height: 34px; border-radius: 11px; display: grid; place-items: center; border: 1px solid var(--line); background: var(--app); color: var(--dim); margin-bottom: 10px; transition: background 0.2s, color 0.2s, transform 0.2s var(--spring); }
+.rail-toggle:hover { color: var(--text); background: var(--soft); }
+.rail-toggle:active { transform: scale(0.92); }
+.nav-lbl { display: none; min-width: 0; font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rail-user { display: flex; align-items: center; gap: 12px; color: var(--text); }
+.rail-user .nav-lbl b { display: block; font-size: 14px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; }
+.rail-user .nav-lbl small { display: block; font-size: 12px; color: var(--faint); font-weight: 500; }
+
+/* Развёрнутое меню: иконка + подпись */
+html[data-rail='open'] .rail { align-items: stretch; padding: 26px 16px 22px; }
+html[data-rail='open'] .rail-head { padding: 0 4px; }
+html[data-rail='open'] .rail-brand { display: block; }
+html[data-rail='open'] .rail-toggle { position: absolute; top: 34px; right: 14px; margin: 0; }
+html[data-rail='open'] .rail a.nav { width: auto; height: 50px; display: flex; align-items: center; justify-content: flex-start; gap: 14px; padding: 0 15px; border-radius: 15px; }
+html[data-rail='open'] .rail a.nav .nav-lbl { display: block; }
+html[data-rail='open'] .rail a.nav.on .nav-lbl { color: var(--accent); }
+html[data-rail='open'] .rail a.nav::after { display: none; }
+html[data-rail='open'] .rail-user { padding: 8px 8px 0; }
+html[data-rail='open'] .rail-user .nav-lbl { display: block; }
+
+/* Телефон: нижняя панель как раньше, без подписей и переключателя */
+@media (max-width: 760px) {
+  .app, html[data-rail] .app { grid-template-columns: minmax(0, 1fr); }
+  html[data-rail] .rail { top: auto; bottom: 0; align-items: center; padding: 10px 8px calc(10px + env(safe-area-inset-bottom)); border-right: 0; border-top: 1px solid var(--line); overflow: visible; height: 74px; }
+  html[data-rail] .rail a.nav { display: grid; place-items: center; width: 46px; height: 46px; padding: 0; }
+  html[data-rail] .rail a.nav.nav-extra { display: none; }
+  html[data-rail] .nav-lbl, .rail-toggle, .rail-head, .rail-user { display: none !important; }
+  .main { padding: 20px 16px 24px; }
+}
