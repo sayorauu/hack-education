@@ -18,6 +18,7 @@ import { showOnboarding, registerOnboardingActions } from './ui/onboarding.js';
 import { renderAdmin, registerAdminActions } from './ui/admin.js';
 import { initAuth, onAuthChange, takeOAuthResult } from './cloud/auth.js';
 import { canUse, openAuth, registerAuthActions } from './ui/auth.js';
+import { renderFriends, registerFriendsActions, refreshUnread, paintBadge } from './ui/friends.js';
 
 const main = document.getElementById('main');
 const rail = document.getElementById('rail');
@@ -42,6 +43,7 @@ function view(path, params) {
         return renderTopic(seg[1]);
       }
       return renderPractice(seg[1]);
+    case 'friends': return renderFriends(params, seg);
     case 'leaderboard': return renderLeaderboard();
     case 'pisa': return renderPisa();
     case 'wallet': return renderWallet();
@@ -65,6 +67,7 @@ function render() {
   const caret = keepId && 'selectionStart' in active ? active.selectionStart : null;
 
   rail.innerHTML = renderRail(path);
+  paintBadge();
   main.innerHTML = view(path, params);
   document.title = t('app.title');
   document.documentElement.lang = getSettings().lang;
@@ -100,6 +103,7 @@ registerWalletActions(render);
 registerTutorActions(render);
 registerProfileActions(render);
 registerAuthActions(render);
+registerFriendsActions(render);
 registerOnboardingActions(action, render);
 registerAdminActions(render);
 
@@ -141,6 +145,9 @@ initAuth().then(() => {
   render();
 });
 onAuthChange(() => render());
+// Значок новых сообщений от друзей: проверяем раз в 30 секунд
+setInterval(refreshUnread, 30000);
+setTimeout(refreshUnread, 2500);
 
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
   navigator.serviceWorker.register('sw.js').catch(() => { /* офлайн-режим просто не включится */ });

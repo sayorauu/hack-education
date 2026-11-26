@@ -101,7 +101,7 @@ function result() {
     <div class="verdict ${above ? 'up' : 'down'} page-enter">${icon(above ? 'trophy' : 'trend', 24)} ${t(above ? 'pisa.verdictAbove' : 'pisa.verdictBelow')} · ${t('pisa.score')}: ${r.total}</div>
     <div class="res-grid">${card('math', t('pisa.math'))}${card('reading', t('pisa.reading'))}</div>
     <p class="note" style="margin-top:14px">${t('pisa.disclaimer')} ${tf('pisa.source', { s: PISA_AVG.source })}</p>
-    <div class="q-actions"><button class="btn" data-act="pisa-start">${t('pisa.retake')}</button><a class="btn btn-soft" href="#/topics">${t('nav.topics')}</a></div>
+    <div class="q-actions"><button class="btn" data-act="pisa-start">${t('pisa.retake')}</button><a class="btn btn-soft" href="#/friends?share=pisa">${icon('send', 15)} ${t('fr.shareFriend')}</a><a class="btn btn-soft" href="#/topics">${t('nav.topics')}</a></div>
     <section style="margin-top:30px">
       <div class="sec-head"><h2>${t('pisa.review')}</h2></div>
       <div style="display:grid;gap:12px">

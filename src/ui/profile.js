@@ -14,6 +14,7 @@ export function renderProfile() {
     ${accountPanel()}
     <nav class="menu-links mobile-only">
       <a href="#/leaderboard"><span class="ml-ic t-sky">${icon('trophy', 20)}</span><b>${t('nav.leaderboard')}</b>${icon('chevR', 18)}</a>
+      <a href="#/friends"><span class="ml-ic t-lilac">${icon('users', 20)}</span><b>${t('nav.friends')}</b>${icon('chevR', 18)}</a>
       <a href="#/wallet"><span class="ml-ic t-cream">${coin(24)}</span><b>${t('nav.wallet')}</b><span class="ml-val">${fmt(p.coins)}</span>${icon('chevR', 18)}</a>
     </nav>
     <div class="wallet">

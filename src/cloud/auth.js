@@ -153,6 +153,7 @@ async function push() {
   });
   writeJson(SYNC_KEY, now);
   syncState = 'ok';
+  pushPublicCard();
 }
 
 /** После входа: если в облаке есть прогресс новее — берём его, иначе отправляем свой. */
@@ -251,3 +252,40 @@ export async function initAuth() {
 
 export const lastSyncedAt = () => readJson(SYNC_KEY);
 export const hasState = () => Boolean(getState());
+
+/* ─── Для друзей и сообщений ──────────────────────────────────────────── */
+
+export const myId = () => session?.user?.id || null;
+
+/** Запрос к Supabase от имени вошедшего ученика. */
+export async function rest(path, opts = {}) {
+  const t = await token();
+  if (!t) { const e = new Error('no_session'); e.code = navigator.onLine ? 'no_session' : 'offline'; throw e; }
+  return api(path, { ...opts, token: t });
+}
+
+/** Учебная статистика для карточки, которую видят друзья (без личных данных). */
+export function publicStats(p = getProfile()) {
+  const last = (p.pisa || [])[0];
+  return {
+    solved: p.correct || 0,
+    attempts: p.attempts || 0,
+    accuracy: p.attempts ? Math.round((100 * (p.correct || 0)) / p.attempts) : 0,
+    streak: p.streakDays || 0,
+    bestStreak: p.bestStreak || 0,
+    pisa: last ? last.total : null,
+  };
+}
+
+/** Карточка ученика для друзей: обновляется вместе с прогрессом. */
+export async function pushPublicCard() {
+  if (!isLoggedIn()) return;
+  const p = getProfile();
+  try {
+    await rest('/rest/v1/users_public?on_conflict=id', {
+      method: 'POST',
+      headers: { prefer: 'resolution=merge-duplicates,return=minimal' },
+      body: { id: session.user.id, name: (p.name || '').slice(0, 40), grade: p.grade || null, stats: publicStats(p), updated_at: new Date().toISOString() },
+    });
+  } catch { /* таблицы ещё нет (не запущен social.sql) или нет сети */ }
+}

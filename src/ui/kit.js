@@ -21,6 +21,7 @@ const NAV = [
   { path: '/pisa', icon: 'target', key: 'nav.pisa' },
   { path: '/leaderboard', icon: 'trophy', key: 'nav.leaderboard', extra: true },
   { path: '/wallet', icon: 'wallet', key: 'nav.wallet', extra: true },
+  { path: '/friends', icon: 'users', key: 'nav.friends', extra: true },
   { path: '/profile', icon: 'user', key: 'nav.profile' },
 ];
 
