@@ -2,7 +2,7 @@ import { icon } from './icons.js';
 import { t, tf, loc, fmtDate } from '../i18n.js';
 import { getProfile, recordPisa, COINS } from '../state.js';
 import { PISA_ITEMS, PISA_STIMULI, PISA_AVG, scorePisa } from '../data/pisa.js';
-import { header, esc, coinBurst } from './kit.js';
+import { header, esc, coinBurst, openModal, closeModal } from './kit.js';
 import { action } from './dom.js';
 
 let P = { phase: 'intro', idx: 0, answers: {}, result: null, t0: 0 };
@@ -163,5 +163,51 @@ export function registerPisaActions(rerender) {
     rerender();
     window.scrollTo({ top: 0 });
     coinBurst(document.getElementById('coinCount'), COINS.pisaDone);
+  });
+}
+
+/* ─── Уход со страницы во время теста ─────────────────────────────────── */
+
+/** Тест идёт (или готовится) — уходить можно только с подтверждением. */
+export const pisaActive = () => P.phase === 'test' || P.phase === 'loading';
+
+/** Окно «Выйти из пробного PISA?». target — куда ученик хотел перейти. */
+export function confirmLeavePisa(target) {
+  const answered = Object.keys(P.answers).length;
+  openModal(`
+    <div class="leave-sheet">
+      <span class="leave-ic">${icon('target', 24)}</span>
+      <h2>${t('pisa.leaveT')}</h2>
+      <p class="note">${tf('pisa.leaveB', { a: answered, n: PISA_ITEMS.length })}</p>
+      <div class="q-actions">
+        <button class="btn" data-act="pisa-stay">${t('pisa.stay')}</button>
+        <button class="btn btn-soft leave-btn" data-act="pisa-leave" data-to="${esc(target)}">${t('pisa.leave')}</button>
+      </div>
+    </div>`);
+}
+
+export function registerPisaLeave() {
+  action('pisa-stay', () => closeModal());
+  action('pisa-leave', ({ to }) => {
+    P = { phase: 'intro', idx: 0, answers: {}, result: null, t0: 0 };
+    closeModal();
+    location.hash = to || '#/';
+  });
+  // Клик по ссылке на другой раздел перехватываем до перехода — история браузера не засоряется
+  document.addEventListener('click', (e) => {
+    if (!pisaActive()) return;
+    const a = e.target.closest?.('a[href^="#"]');
+    if (!a) return;
+    const href = a.getAttribute('href');
+    if (href.startsWith('#/pisa')) return;
+    e.preventDefault();
+    e.stopPropagation();
+    confirmLeavePisa(href);
+  }, true);
+  // Обновление или закрытие вкладки — стандартное предупреждение браузера
+  window.addEventListener('beforeunload', (e) => {
+    if (!pisaActive()) return;
+    e.preventDefault();
+    e.returnValue = '';
   });
 }

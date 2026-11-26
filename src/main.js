@@ -10,7 +10,7 @@ import { renderDashboard, registerDashboardActions } from './ui/dashboard.js';
 import { renderTopics, renderTopic, bindTopicSearch } from './ui/topics.js';
 import { renderPractice, registerPracticeActions } from './ui/practice.js';
 import { renderLeaderboard, registerLeaderboardActions } from './ui/leaderboard.js';
-import { renderPisa, registerPisaActions, animatePisa } from './ui/pisa.js';
+import { renderPisa, registerPisaActions, animatePisa, pisaActive, confirmLeavePisa, registerPisaLeave } from './ui/pisa.js';
 import { renderWallet, registerWalletActions, bindWalletInputs } from './ui/wallet.js';
 import { renderTutor, registerTutorActions, seedTutorQuestion, flushPending } from './ui/tutor.js';
 import { renderProfile, registerProfileActions, bindChipRadios } from './ui/profile.js';
@@ -78,6 +78,7 @@ registerDashboardActions(render);
 registerPracticeActions(render);
 registerLeaderboardActions(render);
 registerPisaActions(render);
+registerPisaLeave();
 registerWalletActions(render);
 registerTutorActions(render);
 registerProfileActions(render);
@@ -98,7 +99,18 @@ document.body.addEventListener('input', (e) => {
 });
 
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
-window.addEventListener('hashchange', render);
+/* Во время пробного PISA уход на другую страницу — только с подтверждением */
+let lastHash = location.hash;
+window.addEventListener('hashchange', () => {
+  const next = location.hash;
+  if (pisaActive() && lastHash.startsWith('#/pisa') && !next.startsWith('#/pisa')) {
+    history.replaceState(null, '', lastHash); // остаёмся на тесте, пока ученик не решит
+    confirmLeavePisa(next);
+    return;
+  }
+  lastHash = next;
+  render();
+});
 
 render();
 if (!getProfile().onboarded) showOnboarding(render);

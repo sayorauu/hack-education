@@ -967,3 +967,9 @@ html[lang='kk'] .glyph.num i::after { content: ' сын'; }
   .kapi-ava { width: 32px; height: 32px; padding: 4px; border-radius: 11px; }
   .chat-form { gap: 8px; }
 }
+
+/* Окно «Выйти из пробного PISA?» */
+.leave-sheet { text-align: center; display: grid; justify-items: center; gap: 10px; }
+.leave-ic { width: 54px; height: 54px; border-radius: 17px; display: grid; place-items: center; background: var(--bad-wash); color: var(--bad); }
+.leave-sheet .q-actions { justify-content: center; margin-top: 10px; }
+.leave-btn { color: var(--bad); }
