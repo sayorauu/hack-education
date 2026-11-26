@@ -98,6 +98,8 @@ export function renderWallet() {
         <section class="panel">
           <div class="sec-head"><h2>${t('wallet.earn')}</h2></div>
           ${['e1', 'e2', 'e3', 'e4', 'e5'].map((k) => `<div class="log-row"><span>${icon('star', 16)} ${t('wallet.' + k)}</span></div>`).join('')}
+          <div class="log-row max-row"><span>${icon('shield', 16)} ${tf('wallet.max', { n: fmt(COINS.maxBalance) })}</span></div>
+          ${p.coins >= COINS.maxBalance ? `<p class="max-note">${tf('wallet.atMax', { n: fmt(COINS.maxBalance) })}</p>` : ''}
         </section>
         <section class="panel">
           <div class="sec-head"><h2>${t('wallet.history')}</h2><span class="count">${p.coinLog.length}</span></div>

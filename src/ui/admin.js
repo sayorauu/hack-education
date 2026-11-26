@@ -6,7 +6,7 @@
 
 import { icon } from './icons.js';
 import { t, tf, fmtDate } from '../i18n.js';
-import { getProfile, adminAdjust } from '../state.js';
+import { getProfile, adminAdjust, COINS } from '../state.js';
 import { header, esc, fmt, coin, coinBurst } from './kit.js';
 import { action, toast } from './dom.js';
 
@@ -78,7 +78,8 @@ export function registerAdminActions(rerender) {
     if (!unlocked()) return;
     const got = adminAdjust(n, note);
     if (got > 0) coinBurst(el, got);
-    toast(tf(got >= 0 ? 'admin.added' : 'admin.removed', { n: fmt(Math.abs(got)) }));
+    if (n > 0 && got === 0) toast(tf('admin.maxReached', { n: fmt(COINS.maxBalance) }));
+    else toast(tf(got >= 0 ? 'admin.added' : 'admin.removed', { n: fmt(Math.abs(got)) }));
     rerender();
   };
   action('admin-add', ({ n }, el) => apply(Number(n), '', el));

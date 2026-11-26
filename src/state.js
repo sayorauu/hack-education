@@ -19,6 +19,7 @@ export const COINS = {
   pisaDone: 50,          // прошёл пробный PISA
   rateKzt: 0.1,          // 1 монета = 0,1 ₸ (1000 монет = 100 ₸)
   minPayout: 1000,       // минимум к выводу
+  maxBalance: 100000,    // потолок баланса: больше монет накопить нельзя
 };
 
 const emptyProfile = () => ({
@@ -61,7 +62,9 @@ function load() {
     const raw = JSON.parse(localStorage.getItem(KEY) || 'null');
     if (raw && raw.profile) {
       const d = defaultState();
-      return { profile: { ...d.profile, ...raw.profile }, settings: { ...d.settings, ...raw.settings } };
+      const profile = { ...d.profile, ...raw.profile };
+      profile.coins = Math.min(COINS.maxBalance, Math.max(0, Number(profile.coins) || 0)); // старые балансы выше потолка
+      return { profile, settings: { ...d.settings, ...raw.settings } };
     }
   } catch (e) {
     console.warn('NASstudy: состояние не прочитано, начинаем заново', e);
@@ -107,14 +110,19 @@ export function topicStats(topicId, p = state.profile) {
 
 /* ─── Монеты ──────────────────────────────────────────────────────────── */
 
+/** Начисление или списание с учётом потолка. Возвращает, сколько реально изменилось. */
 function addCoins(p, amount, reason, meta = {}) {
-  if (!amount) return;
-  p.coins = Math.max(0, p.coins + amount);
-  p.coinLog.unshift({ ts: Date.now(), amount, reason, ...meta });
+  if (!amount) return 0;
+  const before = p.coins;
+  p.coins = Math.min(COINS.maxBalance, Math.max(0, p.coins + amount));
+  const applied = p.coins - before;
+  if (!applied) return 0; // упёрлись в потолок или в ноль — в историю не пишем
+  p.coinLog.unshift({ ts: Date.now(), amount: applied, reason, ...meta });
   if (p.coinLog.length > 200) p.coinLog.length = 200;
+  return applied;
 }
 
-export function awardCoins(amount, reason, meta) { update((s) => addCoins(s.profile, amount, reason, meta)); }
+export function awardCoins(amount, reason, meta) { let got = 0; update((s) => { got = addCoins(s.profile, amount, reason, meta); }); return got; }
 
 /**
  * Демо-вывод: списывает монеты и записывает «перевод». Реальных денег нет.
@@ -172,12 +180,12 @@ export function recordAttempt({ item, subject, correct, hints = 0, ms = 0 }) {
 
     if (correct) {
       gained = repeat ? 1 : COINS.perCorrect(item.b) + (hints === 0 ? COINS.firstTryBonus : 0);
-      addCoins(p, gained, 'correct');
+      gained = addCoins(p, gained, 'correct');
       // Бонус серии — за первый ВЕРНЫЙ ответ дня (не за первую попытку)
       if (p.streakPaidOn !== today) {
         p.streakPaidOn = today;
         streakBonus = COINS.dailyStreak * Math.min(5, p.streakDays);
-        addCoins(p, streakBonus, 'streak');
+        streakBonus = addCoins(p, streakBonus, 'streak');
       }
     }
   });

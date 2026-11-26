@@ -157,7 +157,7 @@ export function registerPracticeActions(rerender) {
       // Бонус за тему — не чаще раза в день на одну тему
       const today = new Date().toDateString();
       const already = getProfile().coinLog.some((l) => l.reason === 'topic' && l.topic === S.topicId && new Date(l.ts).toDateString() === today);
-      if (!already) { awardCoins(COINS.topicDone, 'topic', { topic: S.topicId }); S.coins += COINS.topicDone; }
+      if (!already) S.coins += awardCoins(COINS.topicDone, 'topic', { topic: S.topicId });
     } else {
       S.idx += 1; S.selected = null; S.revealed = false; S.hint = false; S.t0 = Date.now();
     }
