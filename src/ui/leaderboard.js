@@ -10,6 +10,8 @@ import { getProfile, masteryOf } from '../state.js';
 import { TOPICS, SUBJECTS } from '../data/curriculum.js';
 import { header, esc, fmt } from './kit.js';
 import { glyphTile } from './topics.js';
+import { renderLeague, renderGlobal } from './league.js';
+import { authAvailable } from '../cloud/auth.js';
 
 export function renderLeaderboard() {
   const p = getProfile();
@@ -24,8 +26,9 @@ export function renderLeaderboard() {
   });
 
   return `
-    ${header(t('lb.title'), t('lb.subMine'))}
-    <div class="lb-note page-enter">${icon('users', 20)}<span>${t('lb.alone')}</span></div>
+    ${header(t('lb.title'), authAvailable() ? t('lb.subLeague') : t('lb.subMine'))}
+    ${authAvailable() ? renderLeague() + renderGlobal() : `<div class="lb-note page-enter">${icon('users', 20)}<span>${t('lb.alone')}</span></div>`}
+    ${authAvailable() ? `<div class="sec-head lb-mine-h"><h2>${t('lb.mineT')}</h2></div>` : ''}
     <div class="rec-row">
       ${stat('lilac', 'check', fmt(p.attempts), t('lb.rSolved'))}
       ${stat('mint', 'target', `${acc}%`, t('lb.rAcc'))}

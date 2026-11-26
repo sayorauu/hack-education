@@ -7,7 +7,7 @@
  * интернет бывает нестабильным или почасовым.
  */
 
-const CACHE = 'nasstudy-v54';
+const CACHE = 'nasstudy-v59';
 
 const ASSETS = [
   './',
@@ -32,6 +32,8 @@ const ASSETS = [
   'src/ui/auth.js',
   'src/cloud/social.js',
   'src/ui/friends.js',
+  'src/ui/league.js',
+  'src/ui/levels.js',
   'src/engine/tutor.js',
   'src/engine/localllm.js',
   'src/ui/dom.js',

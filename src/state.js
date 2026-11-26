@@ -42,7 +42,116 @@ const emptyProfile = () => ({
   pisa: [],              // { ts, math, reading, total, answers }
   aiDays: [],            // даты, когда ученик говорил с Капи
   streakPaidOn: null,    // день, за который уже выдан бонус серии
+  frTourDone: false,     // видел туториал «Друзья»
+  avatar: null,          // фото профиля: маленький JPEG (data URL), видят друзья
+  lifePts: null,         // очки понимания за всё время → уровень
+  levelSeen: 1,          // какой уровень уже поздравили
+  maxLevelPaid: false,   // приз за 10-й уровень выдан
+  league: null,          // очки недельной лиги друзей, см. LEAGUE
 });
+
+/* ─── Лига друзей ────────────────────────────────────────────────────────
+   Очки недели дают только за ВЕРНЫЕ ответы (сложнее задание — больше очков),
+   за пробный PISA и за помощь другу. В понедельник счёт обнуляется, а
+   итоговое место прошлой недели приносит монеты топ-3. */
+export const LEAGUE = {
+  perCorrect: (b, hints) => Math.max(5, Math.round(12 + b * 5)) - (hints ? 4 : 0), // ≈ 5…20
+  repeat: 1,             // повтор уже решённого — почти ничего, чтобы не фармили
+  pisa: (total) => Math.round(total / 10), // 30…65
+  helpGiver: 30,         // друг понял твоё объяснение и решил задание
+  helpLearner: 15,       // решил похожее задание после объяснения друга
+  rewards: [300, 200, 100], // топ-3 недели среди друзей
+  globalPrize: 1000,     // лидер ОБЩЕГО рейтинга недели (среди всех учеников)
+  qualMin: 3,            // день «засчитан»: ≥3 задания…
+  qualAcc: 0.6,          // …и ≥60% верно
+};
+
+/* ─── Уровни (статус ученика) ─────────────────────────────────────────────
+   Уровень растёт от очков понимания за всё время (те же очки, что в лиге,
+   но без недельного обнуления). Названия — в i18n: lvl.n1 … lvl.n10.
+   За 10-й уровень — большой приз, один раз. */
+export const LEVELS = [0, 60, 180, 400, 750, 1250, 2000, 3000, 4500, 6500];
+export const LEVEL_MAX_PRIZE = 10000;
+
+export function levelInfo(p = state.profile) {
+  const pts = p.lifePts || 0;
+  let lvl = 1;
+  for (let i = 0; i < LEVELS.length; i++) if (pts >= LEVELS[i]) lvl = i + 1;
+  const from = LEVELS[lvl - 1], to = LEVELS[lvl] ?? null;
+  return { lvl, pts, from, to, need: to == null ? 0 : to - pts, pct: to == null ? 1 : (pts - from) / (to - from), max: lvl === LEVELS.length };
+}
+
+const pad = (n) => String(n).padStart(2, '0');
+export const dayKey = (d = new Date()) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+/** Неделя = дата её понедельника (по местному времени). */
+export function weekId(d = new Date()) {
+  const m = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  m.setDate(m.getDate() - ((m.getDay() + 6) % 7));
+  return dayKey(m);
+}
+export function prevWeekId(d = new Date()) { const x = new Date(d); x.setDate(x.getDate() - 7); return weekId(x); }
+/** Сколько дней до конца недели (включая сегодня). */
+export const daysLeftInWeek = (d = new Date()) => 7 - ((d.getDay() + 6) % 7);
+
+/** Очки этой и прошлой недели, без изменения профиля. */
+export function leagueView(p = state.profile) {
+  const L = p.league || {};
+  const cur = weekId(), prev = prevWeekId();
+  const pts = L.week === cur ? L.pts || 0 : 0;
+  const prevPts = L.week === prev ? L.pts || 0 : L.prev?.week === prev ? L.prev.pts || 0 : 0;
+  return { week: cur, pts, prevWeek: prev, prevPts, claimed: L.claimed || null };
+}
+
+function rollWeek(p) {
+  const v = leagueView(p);
+  const old = p.league || {};
+  if (old.week !== v.week) p.league = { ...old, week: v.week, pts: 0, prev: { week: v.prevWeek, pts: v.prevPts } };
+  return p.league;
+}
+function addLeague(p, n) {
+  if (n > 0) {
+    const L = rollWeek(p); L.pts = (L.pts || 0) + n;
+    p.lifePts = (p.lifePts || 0) + n;
+    // Достиг максимального уровня — приз один раз
+    if (!p.maxLevelPaid && levelInfo(p).max) { p.maxLevelPaid = true; addCoins(p, LEVEL_MAX_PRIZE, 'maxLevel'); }
+  }
+  return n;
+}
+export function addLeaguePoints(n) { update((s) => { addLeague(s.profile, n); }); return n; }
+export function setLeague(fn) { update((s) => { fn(rollWeek(s.profile)); }); }
+
+/** Дни, когда ученик «засчитал» день: ≥3 задания и ≥60% верно (последние 30). */
+export function dayStats(p = state.profile) {
+  const by = {};
+  for (const h of p.history) { const k = dayKey(new Date(h.ts)); (by[k] ||= { n: 0, c: 0 }); by[k].n += 1; if (h.correct) by[k].c += 1; }
+  return by;
+}
+export const isQualified = (d) => Boolean(d && d.n >= LEAGUE.qualMin && d.c / d.n >= LEAGUE.qualAcc);
+export function qualifiedDays(p = state.profile) {
+  const by = dayStats(p);
+  return Object.keys(by).filter((k) => isQualified(by[k])).sort().reverse().slice(0, 30);
+}
+/** Что осталось сделать сегодня, чтобы день засчитался. */
+export function todayNeed(p = state.profile) {
+  const d = dayStats(p)[dayKey()] || { n: 0, c: 0 };
+  if (isQualified(d)) return { done: true, n: d.n, c: d.c, more: 0 };
+  // сколько ещё верных ответов нужно (минимум до 3 заданий и до 60%)
+  let more = 0, n = d.n, c = d.c;
+  while (!(n >= LEAGUE.qualMin && c / n >= LEAGUE.qualAcc) && more < 50) { n += 1; c += 1; more += 1; }
+  return { done: false, n: d.n, c: d.c, more };
+}
+/** Задания, в которых ученик недавно ошибся и пока не исправился (для «Объясни другу»). */
+export function recentMisses(p = state.profile, max = 8) {
+  const okIds = new Set(p.history.filter((h) => h.correct).map((h) => h.itemId));
+  const out = [];
+  const since = Date.now() - 21 * 86_400_000;
+  for (let i = p.history.length - 1; i >= 0 && out.length < max; i--) {
+    const h = p.history[i];
+    if (h.ts < since) break;
+    if (!h.correct && !okIds.has(h.itemId) && !out.includes(h.itemId)) out.push(h.itemId);
+  }
+  return out;
+}
 
 const defaultState = () => ({
   profile: emptyProfile(),
@@ -54,6 +163,15 @@ const defaultState = () => ({
   },
 });
 
+/** Старые профили: очки за всё время оцениваем по верным ответам (без поздравлений задним числом). */
+function seedLife(p) {
+  if (p.lifePts == null) {
+    p.lifePts = (p.correct || 0) * 12 + (p.pisa || []).length * 40;
+    p.levelSeen = levelInfo(p).lvl;
+    p.maxLevelPaid = p.maxLevelPaid || false;
+  }
+}
+
 let state = load();
 const listeners = new Set();
 
@@ -64,6 +182,7 @@ function load() {
       const d = defaultState();
       const profile = { ...d.profile, ...raw.profile };
       profile.coins = Math.min(COINS.maxBalance, Math.max(0, Number(profile.coins) || 0)); // старые балансы выше потолка
+      seedLife(profile);
       return { profile, settings: { ...d.settings, ...raw.settings } };
     }
   } catch (e) {
@@ -93,6 +212,7 @@ export function replaceProfile(p) {
   const d = defaultState().profile;
   state.profile = { ...d, ...p };
   state.profile.coins = Math.min(COINS.maxBalance, Math.max(0, Number(state.profile.coins) || 0));
+  seedLife(state.profile);
   emit();
 }
 
@@ -189,6 +309,7 @@ export function recordAttempt({ item, subject, correct, hints = 0, ms = 0 }) {
     if (correct) {
       gained = repeat ? 1 : COINS.perCorrect(item.b) + (hints === 0 ? COINS.firstTryBonus : 0);
       gained = addCoins(p, gained, 'correct');
+      addLeague(p, repeat ? LEAGUE.repeat : LEAGUE.perCorrect(item.b, hints));
       // Бонус серии — за первый ВЕРНЫЙ ответ дня (не за первую попытку)
       if (p.streakPaidOn !== today) {
         p.streakPaidOn = today;
@@ -202,8 +323,11 @@ export function recordAttempt({ item, subject, correct, hints = 0, ms = 0 }) {
 
 export function recordPisa(result) {
   update((s) => {
+    const today = new Date().toDateString();
+    const firstToday = !s.profile.pisa.some((r) => new Date(r.ts).toDateString() === today);
     s.profile.pisa.unshift({ ts: Date.now(), ...result });
     addCoins(s.profile, COINS.pisaDone, 'pisa');
+    if (firstToday) addLeague(s.profile, LEAGUE.pisa(result.total || 0)); // очки за PISA — раз в день, чтобы не фармили
   });
 }
 

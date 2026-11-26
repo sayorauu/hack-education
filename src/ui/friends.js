@@ -14,18 +14,18 @@ import { getProfile, masteryOf } from '../state.js';
 import { TOPICS } from '../data/curriculum.js';
 import { authAvailable, isLoggedIn, myId } from '../cloud/auth.js';
 import { myCard, loadFriends, addByCode, accept, removeLink, loadChat, sendMessage, markRead, unreadCounts, socialErrorKey } from '../cloud/social.js';
-import { header, esc, fmt } from './kit.js';
+import { header, esc, fmt, photoAva } from './kit.js';
 import { action, toast } from './dom.js';
 import { requireAuth } from './auth.js';
+import { levelBadge } from './levels.js';
+import { friendExtras, streakBanner, helpPanel, explainBubble, thanksBubble, creditThanks, maybeFriendsTour } from './league.js';
 
 const F = { card: null, list: null, err: '', loading: false, loadedAt: 0, addMsg: '', addOk: false, chat: { id: null, msgs: null, err: '' }, sending: false };
 let rerenderRef = () => {};
 let pollTimer = null;
 let unreadTotal = 0;
 
-const initialsOf = (name) => (String(name || '?').trim().split(/\s+/).map((w) => w[0]).join('').slice(0, 2) || '?').toUpperCase();
-const hueOf = (id) => [...String(id)].reduce((a, c) => (a * 31 + c.charCodeAt(0)) % 360, 7);
-const ava = (card, size = 46) => `<span class="fr-ava" style="--h:${hueOf(card.id)};width:${size}px;height:${size}px">${esc(initialsOf(card.name))}</span>`;
+const ava = (card, size = 46) => photoAva(card, size);
 
 /* ─── Достижения, которыми можно поделиться ───────────────────────────── */
 
@@ -95,6 +95,7 @@ function startPolling() {
 export async function refreshUnread() {
   if (!isLoggedIn() || !navigator.onLine) return;
   try {
+    creditThanks();
     const u = await unreadCounts();
     unreadTotal = Object.values(u).reduce((a, b) => a + b, 0);
     paintBadge();
@@ -124,8 +125,9 @@ function gate() {
 const errBox = (key) => (key ? `<div class="fr-err">${icon('shield', 16)}<span>${t(key)}</span></div>` : '');
 
 export function renderFriends(params, seg) {
+  maybeFriendsTour();
   const g = gate();
-  if (g) return `${header(t('fr.title'), t('fr.sub'))}${g}`;
+  if (g) return `${header(t('fr.title'), t('fr.sub'))}<button class="btn btn-soft btn-sm fr-how" data-act="fr-tour">${icon('hint', 14)} ${t('ft.how')}</button>${g}`;
   const chatId = seg[1];
   startPolling();
   if (chatId) return renderChat(chatId);
@@ -140,14 +142,14 @@ export function renderFriends(params, seg) {
     const s = f.card.stats || {};
     return `<div class="fr-row">
       ${ava(f.card)}
-      <div class="fr-info"><b>${esc(f.card.name || t('fr.noName'))}</b>
+      <div class="fr-info"><b>${esc(f.card.name || t('fr.noName'))} ${levelBadge(s.lvl)}</b>
         <small>${f.card.grade ? tf('common.grade', { n: f.card.grade }) : ''}</small>
         <span class="fr-stats">
           <span>${icon('check', 12)} ${fmt(s.solved || 0)}</span>
           <span>${icon('trend', 12)} ${s.accuracy || 0}%</span>
           <span>${icon('flame', 12)} ${s.streak || 0}</span>
           ${s.pisa ? `<span>${icon('target', 12)} ${s.pisa}</span>` : ''}
-        </span></div>
+        </span>${friendExtras(f)}</div>
       ${ach
         ? `<button class="btn btn-sm" data-act="fr-share-to" data-id="${f.id}" data-type="${ach.type}">${icon('send', 14)} ${t('fr.send')}</button>`
         : `<a class="btn btn-soft btn-sm fr-open" href="#/friends/${f.id}">${icon('chat', 14)} ${t('fr.write')}${f.unread ? `<i class="fr-unread">${f.unread}</i>` : ''}</a>`}
@@ -156,7 +158,9 @@ export function renderFriends(params, seg) {
 
   return `
     ${header(t('fr.title'), t('fr.sub'))}
+    <button class="btn btn-soft btn-sm fr-how" data-act="fr-tour">${icon('hint', 14)} ${t('ft.how')}</button>
     ${errBox(F.err)}
+    ${streakBanner(L.friends)}
     ${ach ? `<div class="fr-share-banner">${icon(ACH_ICON[ach.type] || 'trophy', 18)}<span>${tf('fr.shareChoose', { a: esc(ach.label) })}</span><a class="btn btn-soft btn-sm" href="#/friends">${t('common.close')}</a></div>` : ''}
     <div class="fr-grid">
       <div class="fr-col">
@@ -205,6 +209,9 @@ function renderChat(id) {
   const msgs = F.chat.msgs;
   const bubble = (m) => {
     const mine = m.sender === me;
+    const time = fmtDate(new Date(m.created_at).getTime());
+    if (m.kind === 'explain') return explainBubble(m, mine, time);
+    if (m.kind === 'thanks') return thanksBubble(m, mine, time, card.name);
     if (m.kind === 'achievement') {
       const type = m.payload?.type;
       return `<div class="fr-msg ach ${mine ? 'me' : 'them'}"><span class="ach-ic">${icon(ACH_ICON[type] || 'trophy', 18)}</span>
@@ -214,9 +221,10 @@ function renderChat(id) {
   };
   const achs = myAchievements();
   return `
-    ${header(esc(card.name || t('fr.title')), card.grade ? tf('common.grade', { n: card.grade }) : '')}
+    ${header(`<span class="chat-title">${photoAva(card, 46)}${esc(card.name || t('fr.title'))}</span>`, card.grade ? tf('common.grade', { n: card.grade }) : '')}
     <a class="back-link" href="#/friends">${icon('arrowLeft', 16)} ${t('fr.back')}</a>
     ${errBox(F.chat.err)}
+    ${helpPanel(id, card)}
     <section class="chat fr-chat">
       <div class="chat-log" id="frLog">
         ${msgs == null ? `<p class="empty"><span class="spin"></span></p>`
@@ -239,6 +247,12 @@ function renderChat(id) {
 
 export function registerFriendsActions(rerender) {
   rerenderRef = rerender;
+  // Отправили объяснение / «спасибо» из окна — обновляем чат
+  window.addEventListener('nas:chat-sent', (e) => {
+    const id = e.detail;
+    if (location.hash.startsWith('#/friends/' + id)) refreshChat(id, true).then(() => { rerender(); scrollChat(); });
+    else rerender();
+  });
   const fail = (e) => { toast(t(socialErrorKey(e))); };
 
   action('fr-copy', async () => {

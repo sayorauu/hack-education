@@ -12,7 +12,7 @@
  * кэшируются, чтобы вход работал и после перезапуска без сети.
  */
 
-import { getState, getProfile, replaceProfile, subscribe } from '../state.js';
+import { getState, getProfile, replaceProfile, subscribe, leagueView, qualifiedDays, recentMisses, levelInfo } from '../state.js';
 
 const CFG_KEY = 'nasstudy.cloud';
 const SES_KEY = 'nasstudy.session';
@@ -267,7 +267,12 @@ export async function rest(path, opts = {}) {
 /** Учебная статистика для карточки, которую видят друзья (без личных данных). */
 export function publicStats(p = getProfile()) {
   const last = (p.pisa || [])[0];
+  const L = leagueView(p);
   return {
+    lvl: levelInfo(p).lvl, // уровень (статус)
+    week: L.week, wpts: L.pts, pw: L.prevWeek, ppts: L.prevPts, // лига недели
+    qd: qualifiedDays(p),  // «засчитанные» дни — для общей серии
+    miss: recentMisses(p), // где ошибся — друзья могут объяснить
     solved: p.correct || 0,
     attempts: p.attempts || 0,
     accuracy: p.attempts ? Math.round((100 * (p.correct || 0)) / p.attempts) : 0,
@@ -277,15 +282,20 @@ export function publicStats(p = getProfile()) {
   };
 }
 
+/** Есть ли в базе колонка для фото (null — ещё не знаем). */
+export let avatarColumn = null;
+
 /** Карточка ученика для друзей: обновляется вместе с прогрессом. */
 export async function pushPublicCard() {
   if (!isLoggedIn()) return;
   const p = getProfile();
+  const body = { id: session.user.id, name: (p.name || '').slice(0, 40), grade: p.grade || null, stats: publicStats(p), updated_at: new Date().toISOString() };
+  const send = (b) => rest('/rest/v1/users_public?on_conflict=id', { method: 'POST', headers: { prefer: 'resolution=merge-duplicates,return=minimal' }, body: b });
   try {
-    await rest('/rest/v1/users_public?on_conflict=id', {
-      method: 'POST',
-      headers: { prefer: 'resolution=merge-duplicates,return=minimal' },
-      body: { id: session.user.id, name: (p.name || '').slice(0, 40), grade: p.grade || null, stats: publicStats(p), updated_at: new Date().toISOString() },
-    });
+    if (avatarColumn !== false) {
+      try { await send({ ...body, avatar: p.avatar || null }); avatarColumn = true; return; }
+      catch (e) { if (!/avatar/i.test(e.message)) throw e; avatarColumn = false; } // колонки ещё нет (не запущен league.sql)
+    }
+    await send(body);
   } catch { /* таблицы ещё нет (не запущен social.sql) или нет сети */ }
 }

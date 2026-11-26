@@ -15,6 +15,7 @@ export function socialErrorKey(e) {
   if (e?.code === 'no_session') return 'fr.errLogin';
   if (/pgrst205|42p01|could not find the table|does not exist|42883|pgrst202/.test(m)) return 'fr.errSetup';
   if (/23505|duplicate/.test(m)) return 'fr.errDup';
+  if (/23514|check constraint|messages_kind_check/.test(m)) return 'fr.errSetupLeague';
   if (/row-level security|42501|permission/.test(m)) return 'fr.errPerm';
   return 'fr.errGeneric';
 }
@@ -31,7 +32,12 @@ export async function loadFriends() {
   const me = myId();
   const links = await rest(`/rest/v1/friendships?select=id,requester,addressee,status,created_at&or=(requester.eq.${me},addressee.eq.${me})&order=created_at.desc`);
   const ids = [...new Set(links.map((l) => (l.requester === me ? l.addressee : l.requester)))];
-  const cards = ids.length ? await rest(`/rest/v1/users_public?id=in.(${ids.join(',')})&select=id,name,grade,stats,updated_at`) : [];
+  const q = (cols) => rest(`/rest/v1/users_public?id=in.(${ids.join(',')})&select=${cols}`);
+  let cards = [];
+  if (ids.length) {
+    try { cards = await q('id,name,grade,stats,updated_at,avatar'); }
+    catch (e) { if (!/avatar/i.test(e.message)) throw e; cards = await q('id,name,grade,stats,updated_at'); } // фото ещё не включены
+  }
   const byId = Object.fromEntries(cards.map((c) => [c.id, c]));
   const unread = await unreadCounts();
   const out = { friends: [], incoming: [], outgoing: [] };
@@ -93,3 +99,12 @@ export async function unreadCounts() {
   rows.forEach((r) => { out[r.sender] = (out[r.sender] || 0) + 1; });
   return out;
 }
+
+/** «Спасибо, понял» на мои объяснения с начала недели (за них даются очки лиги). */
+export async function thanksSince(iso) {
+  return rest(`/rest/v1/messages?select=id,sender,payload,created_at&recipient=eq.${myId()}&kind=eq.thanks&created_at=gte.${enc(iso)}&order=created_at.asc&limit=200`);
+}
+
+/** Общий рейтинг недели (функция weekly_top в league.sql): имя, класс, очки — без фото. */
+export const weeklyTop = (week, lim = 10) => rest('/rest/v1/rpc/weekly_top', { method: 'POST', body: { wk: week, lim } });
+export const myWeeklyRank = (week) => rest('/rest/v1/rpc/my_weekly_rank', { method: 'POST', body: { wk: week } });

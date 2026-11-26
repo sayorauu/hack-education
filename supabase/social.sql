@@ -34,7 +34,7 @@ create table if not exists public.messages (
   id         bigint generated always as identity primary key,
   sender     uuid not null references auth.users (id) on delete cascade,
   recipient  uuid not null references auth.users (id) on delete cascade,
-  kind       text not null default 'text' check (kind in ('text', 'achievement')),
+  kind       text not null default 'text' check (kind in ('text', 'achievement', 'explain', 'thanks')),
   body       text not null check (char_length(body) between 1 and 500),
   payload    jsonb,
   created_at timestamptz not null default now(),

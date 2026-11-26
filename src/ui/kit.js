@@ -5,7 +5,7 @@
 
 import { icon } from './icons.js';
 import { t, tf, loc, LANGS } from '../i18n.js';
-import { getProfile, getSettings, update } from '../state.js';
+import { getProfile, getSettings, update, levelInfo } from '../state.js';
 import { SUBJECT_BY_ID } from '../data/curriculum.js';
 import { initials } from '../data/classmates.js';
 
@@ -35,7 +35,7 @@ const NAV_SVG = {
   wallet: '<rect opacity=".35" x="2.5" y="5.5" width="19" height="15" rx="3.5"/><path d="M15.2 10.6h6.3v5h-6.3a2.5 2.5 0 0 1 0-5z"/><path d="M5.5 5.5 15.6 2.8a1.4 1.4 0 0 1 1.8 1.3v1.4z"/>',
   user: '<circle cx="12" cy="7.8" r="4.3"/><path opacity=".35" d="M3.5 21a8.5 8.5 0 0 1 17 0z"/>',
   shield: '<path opacity=".35" d="M12 2.5 20 5.5v6c0 5-3.4 8.7-8 10-4.6-1.3-8-5-8-10v-6z"/><path d="m8.4 12 2.6 2.6 4.6-5" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/>',
-  users: '<circle cx="9" cy="8" r="3.8"/><path opacity=".35" d="M2 20.5a7 7 0 0 1 14 0z"/><circle cx="17" cy="9" r="2.8" opacity=".55"/>',
+  users: '<circle cx="16.6" cy="8.4" r="3" opacity=".55"/><path opacity=".3" d="M16.9 20.5H22.5a6 6 0 0 0-9.6-4.8 7.6 7.6 0 0 1 4 4.8z"/><circle cx="9" cy="8" r="3.8"/><path opacity=".35" d="M2 20.5a7 7 0 0 1 14 0z"/>',
 };
 export const navIcon = (name) => NAV_SVG[name]
   ? `<svg class="nav-ic" viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden="true">${NAV_SVG[name]}</svg>`
@@ -72,8 +72,8 @@ export function renderRail(path) {
     <div class="rail-spacer"></div>
     <button class="nav rail-toggle" data-act="rail-toggle" aria-expanded="${open}" data-tip="${esc(t('rail.expand'))}" aria-label="${esc(t(open ? 'rail.collapse' : 'rail.expand'))}"><span class="rt-ic">${icon('chevL', 20)}</span><span class="nav-lbl">${esc(t('rail.collapse'))}</span></button>
     <a class="rail-user" href="#/profile" aria-label="${esc(t('nav.profile'))}">
-      <span class="rail-avatar">${esc(initials(p.name || 'NS'))}</span>
-      <span class="nav-lbl"><b>${esc(p.name || 'NASstudy')}</b><small>${p.grade ? esc(tf('common.grade', { n: p.grade })) : ''}</small></span>
+      <span class="rail-avatar ${safePhoto(p.avatar) ? 'has-photo' : ''}">${safePhoto(p.avatar) ? `<img src="${safePhoto(p.avatar)}" alt="">` : esc(initials(p.name || 'NS'))}</span>
+      <span class="nav-lbl"><b>${esc(p.name || 'NASstudy')}</b><small class="rail-lvl">${esc(tf('lvl.railLine', { n: levelInfo(p).lvl, name: t('lvl.n' + levelInfo(p).lvl) }))}</small></span>
     </a>`;
 }
 
@@ -160,6 +160,20 @@ export function switchLang(id, rerender) {
 const PAW = '<svg viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="15.6" rx="4.6" ry="3.9"/><ellipse cx="6.4" cy="10.4" rx="1.9" ry="2.4" transform="rotate(-18 6.4 10.4)"/><ellipse cx="10" cy="7.3" rx="1.9" ry="2.5"/><ellipse cx="14" cy="7.3" rx="1.9" ry="2.5"/><ellipse cx="17.6" cy="10.4" rx="1.9" ry="2.4" transform="rotate(18 17.6 10.4)"/></svg>';
 export function coin(size = 24, cls = '') {
   return `<span class="coin ${cls}" style="--s:${size}px" aria-hidden="true">${PAW}</span>`;
+}
+
+/* ─── Фото ученика ────────────────────────────────────────────────────── */
+
+const PHOTO_RE = /^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/;
+/** Только наше маленькое JPEG-фото (data URL), никаких внешних ссылок. */
+export const safePhoto = (src) => (typeof src === 'string' && src.length < 60000 && PHOTO_RE.test(src) ? src : null);
+const hueOfId = (id) => [...String(id || 'x')].reduce((a, c) => (a * 31 + c.charCodeAt(0)) % 360, 7);
+const initialsOfName = (name) => (String(name || '?').trim().split(/\s+/).map((w) => w[0]).join('').slice(0, 2) || '?').toUpperCase();
+
+/** Кружок ученика: фото, если есть, иначе инициалы. */
+export function photoAva({ id, name, avatar: ph } = {}, size = 46, cls = '') {
+  const src = safePhoto(ph);
+  return `<span class="fr-ava ${src ? 'has-photo' : ''} ${cls}" style="--h:${hueOfId(id)};width:${size}px;height:${size}px">${src ? `<img src="${src}" alt="" loading="lazy" decoding="async">` : esc(initialsOfName(name))}</span>`;
 }
 
 export function avatar(name, hue = 260, cls = '') {

@@ -19,6 +19,8 @@ import { renderAdmin, registerAdminActions } from './ui/admin.js';
 import { initAuth, onAuthChange, takeOAuthResult } from './cloud/auth.js';
 import { canUse, openAuth, registerAuthActions } from './ui/auth.js';
 import { renderFriends, registerFriendsActions, refreshUnread, paintBadge } from './ui/friends.js';
+import { registerLeagueActions } from './ui/league.js';
+import { initLevels } from './ui/levels.js';
 
 const main = document.getElementById('main');
 const rail = document.getElementById('rail');
@@ -104,6 +106,8 @@ registerTutorActions(render);
 registerProfileActions(render);
 registerAuthActions(render);
 registerFriendsActions(render);
+registerLeagueActions(render);
+initLevels();
 registerOnboardingActions(action, render);
 registerAdminActions(render);
 
