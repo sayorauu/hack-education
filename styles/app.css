@@ -1667,3 +1667,54 @@ html[data-motion='off'] .ca, html[data-motion='off'] .ca::after { animation: non
 /* Лёгкое оживление при наведении на карточку темы */
 .tc:hover .glyph .g-art, .tc:hover .glyph .g-f, .rec-row:hover .glyph .g-art, a:hover > .glyph .g-art { transform: rotate(-6deg) scale(1.08); }
 .glyph .g-art, .glyph .g-f { transition: transform .35s cubic-bezier(.34, 1.56, .64, 1); }
+
+/* ─── Настройки v2: меню разделов слева + одна аккуратная колонка ─────── */
+.set-layout { display: grid; grid-template-columns: 250px minmax(0, 760px); gap: 40px; align-items: start; }
+.set-nav { position: sticky; top: 24px; display: grid; gap: 4px; padding: 10px; border-radius: 24px; background: var(--soft); }
+.set-nav-i { display: flex; align-items: center; gap: 12px; padding: 9px 12px; border: 0; border-radius: 16px; background: none; color: var(--dim); font: inherit; font-size: 15px; font-weight: 650; text-align: left; cursor: pointer; transition: background .2s var(--ease), color .2s var(--ease); }
+.set-nav-i:hover { background: var(--app); color: var(--text); }
+.set-nav-i.on { background: var(--app); color: var(--text); box-shadow: 0 1px 2px rgba(20, 24, 40, .06), 0 6px 16px -10px rgba(20, 24, 40, .25); }
+.set-nav-i .set-ic { width: 34px; height: 34px; border-radius: 11px; }
+.set-nav-i .set-ic .nav-ic { width: 20px; height: 20px; }
+.set-main { display: grid; gap: 34px; }
+.set-sec { scroll-margin-top: 24px; animation: rise .4s var(--spring) both; }
+.set-sec .set-head { display: flex; align-items: center; gap: 14px; margin: 0 0 12px 4px; }
+.set-sec .set-head h2 { font-size: 20px; line-height: 1.2; }
+.set-sec .set-head small { display: block; color: var(--dim); font-size: 13px; margin-top: 2px; }
+.set-sec .set-ic { width: 44px; height: 44px; border-radius: 14px; }
+.set-sec .set-ic .nav-ic { width: 24px; height: 24px; }
+.set-card { padding: 4px 22px; border-radius: 22px; background: var(--soft); }
+.set-card > .set-row:first-child, .set-card > .set-block:first-child { border-top: 0; }
+.set-card .set-row, .set-card .set-block { padding: 16px 0; }
+.set-card .set-sub { margin: 0 0 12px 2px; }
+.set-card .set-actions { padding: 16px 0 6px; }
+.set-card .set-note { padding-bottom: 14px; }
+.set-card .set-link { margin: 0 0 16px; }
+.set-card .set-actions .set-act { background: var(--app); }
+.set-card .set-play { background: var(--app); }
+@media (max-width: 980px) {
+  .set-layout { grid-template-columns: minmax(0, 1fr); gap: 18px; }
+  .set-nav { position: sticky; top: 0; z-index: 20; display: flex; overflow-x: auto; gap: 6px; padding: 8px; border-radius: 18px; scrollbar-width: none; background: color-mix(in srgb, var(--soft) 92%, transparent); backdrop-filter: blur(8px); }
+  .set-nav::-webkit-scrollbar { display: none; }
+  .set-nav-i { flex: none; padding: 7px 12px 7px 8px; }
+  .set-nav-i .set-ic { width: 28px; height: 28px; border-radius: 9px; }
+  .set-nav-i .set-ic .nav-ic { width: 17px; height: 17px; }
+  .set-card { padding: 2px 16px; }
+}
+
+/* ─── Опасная зона ────────────────────────────────────────────────────── */
+.t-danger { background: var(--bad-wash); color: var(--bad); }
+#set-danger .set-card { background: color-mix(in srgb, var(--bad-wash) 55%, var(--soft)); box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--bad) 28%, transparent); }
+#set-danger .set-head h2 { color: var(--bad); }
+.dz-btn { flex: none; }
+.dz-del { background: var(--bad) !important; color: #fff !important; border-color: transparent !important; }
+.dz-del:disabled { opacity: .45; cursor: not-allowed; }
+.set-nav-i[data-id='danger'] { color: var(--bad); }
+.dz-sheet { display: grid; gap: 12px; }
+.dz-sheet h2 { font-size: 23px; }
+.dz-ic { width: 52px; height: 52px; border-radius: 16px; display: grid; place-items: center; background: var(--bad-wash); color: var(--bad); }
+.dz-ic .nav-ic { width: 28px; height: 28px; }
+.dz-list { margin: 0; padding: 12px 16px 12px 34px; border-radius: 14px; background: var(--bad-wash); color: var(--text); font-size: 14px; line-height: 1.6; }
+.dz-input { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .14em; font-weight: 700; text-transform: uppercase; }
+.dz-input:focus { border-color: var(--bad); box-shadow: 0 0 0 4px var(--bad-wash); }
+.dz-input.ok { border-color: var(--bad); color: var(--bad); }

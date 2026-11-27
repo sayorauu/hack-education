@@ -257,6 +257,13 @@ export const hasState = () => Boolean(getState());
 
 export const myId = () => session?.user?.id || null;
 
+/** Полное удаление своего аккаунта в облаке (функция delete_my_account в account.sql). */
+export async function deleteAccount() {
+  await rest('/rest/v1/rpc/delete_my_account', { method: 'POST', body: {} });
+  setSession(null);
+  writeJson(SYNC_KEY, null);
+}
+
 /** Запрос к Supabase от имени вошедшего ученика. */
 export async function rest(path, opts = {}) {
   const t = await token();
