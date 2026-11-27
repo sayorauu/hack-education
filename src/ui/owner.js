@@ -6,7 +6,9 @@
 
 import { icon } from './icons.js';
 import { t, tf, fmtDate } from '../i18n.js';
-import { header, esc, fmt } from './kit.js';
+import { header, esc, fmt, navIcon } from './kit.js';
+import { TOPIC_BY_ID } from '../data/curriculum.js';
+import { loc } from '../i18n.js';
 import { action } from './dom.js';
 import { rest, isLoggedIn, myId } from '../cloud/auth.js';
 import { isOwner, deviceId } from '../cloud/track.js';
@@ -37,9 +39,31 @@ let timer = null;
 
 // Понятные названия для страниц и кнопок
 const PAGE_NAMES = { '/': 'Главная', '/topics': 'Темы', '/tutor': 'Капи', '/pisa': 'Пробный PISA', '/leaderboard': 'Рейтинг', '/wallet': 'Кошелёк', '/friends': 'Друзья', '/friends/:id': 'Чат с другом', '/profile': 'Профиль', '/settings': 'Настройки', '/admin': 'Админка', '/owner': 'Главный админ' };
-const pageName = (p) => PAGE_NAMES[p] || (p.startsWith('/topic/') ? 'Тема ' + p.slice(7) : p.startsWith('/practice/') ? 'Задания ' + p.slice(10) : p);
-const ACT_NAMES = { 'pr-check': 'Проверить ответ', 'pr-pick': 'Выбор ответа', 'pr-next': 'Следующее задание', 'pr-hint': 'Подсказка', word: 'Нажал на слово', 'word-ask': 'Спросил Капи о слове', 'tutor-send': 'Вопрос Капи', 'pisa-start': 'Начал PISA', 'pisa-finish': 'Закончил PISA', 'pisa-pick': 'Ответ в PISA', 'auth-submit': 'Вход / регистрация', 'auth-google': 'Вход через Google', 'jury-login': 'Вход жюри', 'fr-add': 'Добавил друга', 'fr-send': 'Сообщение другу', 'ex-send': 'Объяснил другу', 'ex-check': 'Решил похожее', 'pay-send': 'Обмен монет', 'theme': 'Смена темы', 'lang': 'Смена языка', 'set-toggle': 'Настройка', 'acc-del': 'Удаление аккаунта' };
+const tName = (id) => (TOPIC_BY_ID[id] ? loc(TOPIC_BY_ID[id]) : id);
+const pageName = (p) => PAGE_NAMES[p] || (p.startsWith('/topic/') ? 'Тема: ' + tName(p.slice(7)) : p.startsWith('/practice/') ? 'Задания: ' + tName(p.slice(10)) : p);
+const ACT_NAMES = {
+  'pr-check': 'Проверил ответ', 'pr-pick': 'Выбрал ответ', 'pr-next': 'Следующее задание', 'pr-hint': 'Взял подсказку', 'pr-again': 'Тема заново',
+  word: 'Нажал на слово', 'word-ask': 'Спросил Капи о слове', 'word-close': 'Закрыл слово', 'tutor-send': 'Вопрос Капи', 'tutor-suggest': 'Готовый вопрос Капи', voice: 'Голосовой ввод', 'ai-mode': 'Режим Капи', 'local-load': 'Скачал нейросеть', 'local-model': 'Выбор нейросети', 'local-remove': 'Удалил нейросеть',
+  'pisa-start': 'Начал PISA', 'pisa-finish': 'Закончил PISA', 'pisa-pick': 'Ответ в PISA', 'pisa-nav': 'Листал PISA', 'pisa-exit': 'Хотел выйти из PISA', 'pisa-leave': 'Вышел из PISA', 'pisa-stay': 'Остался в PISA', 'pisa-clock': 'Секундомер PISA', 'pisa-fs': 'Весь экран PISA',
+  'auth-submit': 'Вход / регистрация', 'auth-google': 'Вход через Google', 'auth-open': 'Открыл вход', 'auth-tab': 'Вкладка входа', 'auth-guest': 'Остался гостем', 'auth-logout': 'Вышел из аккаунта',
+  'jury-login': 'Вошёл как жюри', 'ob-jury': 'Вошёл как жюри', 'jury-exit': 'Вышел из режима жюри', 'ob-lang': 'Выбрал язык', 'ob-next': 'Знакомство: далее', 'ob-back': 'Знакомство: назад', 'ob-grade': 'Выбрал класс', 'ob-finish': 'Закончил знакомство',
+  'tour-again': 'Открыл туториал', 'wn-ok': 'Прочитал «Что нового»', 'wn-tour': 'Туториал из «Что нового»', 'fr-tour': 'Туториал друзей', 'ft-next': 'Туториал друзей: далее', 'ft-prev': 'Туториал друзей: назад', 'ft-done': 'Закрыл туториал друзей', 'ft-go': 'Туториал друзей: шаг',
+  'fr-add': 'Добавил друга', 'fr-accept': 'Принял заявку', 'fr-decline': 'Отклонил заявку', 'fr-remove': 'Удалил друга', 'fr-copy': 'Скопировал код', 'fr-send': 'Написал другу', 'fr-share-to': 'Поделился достижением', 'ps-nudge': 'Напомнил другу',
+  'ex-open': 'Открыл «Объясни другу»', 'ex-send': 'Объяснил другу', 'ex-try': 'Решает похожее', 'ex-pick': 'Ответ на похожее', 'ex-check': 'Проверил похожее', 'ex-another': 'Другое похожее',
+  'pay-send': 'Обмен монет', 'pay-method': 'Способ обмена', 'pay-bank': 'Выбор банка', 'admin-login': 'Вход в админку', 'admin-add': 'Админ начислил', 'admin-custom': 'Админ: своя сумма', 'admin-zero': 'Админ обнулил', 'admin-logout': 'Вышел из админки',
+  theme: 'Сменил тему', 'theme-set': 'Сменил тему', lang: 'Сменил язык', 'rail-toggle': 'Свернул меню', cal: 'Календарь', 'dash-search': 'Поиск', 'pc-scroll': 'Листал прогресс', 'lvl-see': 'Смотрел уровень',
+  'set-toggle': 'Переключил настройку', 'set-pick': 'Выбрал настройку', 'set-jump': 'Раздел настроек', 'set-test': 'Прослушал звук', 'set-notify': 'Уведомления', 'set-export': 'Скачал прогресс', 'set-news': '«Что нового»', 'profile-save': 'Сохранил профиль', 'profile-reset': 'Сбросил прогресс', 'photo-del': 'Удалил фото',
+  'acc-del': 'Открыл удаление аккаунта', 'acc-del-go': 'Удалил аккаунт', 'modal-close': 'Закрыл окно', 'own-days': 'Период статистики', 'own-mark': 'Отметил «это мы»', 'own-place': 'Наша точка', 'own-radius': 'Радиус',
+};
 const actName = (a) => ACT_NAMES[a] || a;
+
+/* Двухцветные иконки ленты: страница — значок этого раздела, заход — дверь, нажатие — курсор */
+const SV = (d) => `<svg class="nav-ic" viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true">${d}</svg>`;
+const EV_VISIT = SV('<path opacity=".35" d="M13 3h5a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-5z"/><path d="M3 11h8.2l-2.6-2.6 1.4-1.4 5 5-5 5-1.4-1.4 2.6-2.6H3z"/>');
+const EV_CLICK = SV('<circle cx="9" cy="9" r="6" opacity=".3"/><path d="M8.5 7.5 20 12l-4.6 1.5L19 17.2 17.2 19l-3.7-3.6L12 20z"/>');
+const PAGE_ICON = { '/': 'home', '/topics': 'book', '/tutor': 'chat', '/pisa': 'target', '/leaderboard': 'trophy', '/wallet': 'wallet', '/friends': 'users', '/profile': 'user', '/settings': 'settings', '/admin': 'shield', '/owner': 'shield' };
+const pageIcon = (p) => navIcon(PAGE_ICON[p] || (p.startsWith('/friends') ? 'users' : p.startsWith('/topic') || p.startsWith('/practice') ? 'book' : 'home'));
+const evIcon = (e) => (e.kind === 'visit' ? EV_VISIT : e.kind === 'page' ? pageIcon(e.name) : EV_CLICK);
 const ROLE = { guest: 'Гость', user: 'Ученик', jury: 'Жюри' };
 
 async function load(force = false) {
@@ -156,8 +180,8 @@ export function renderOwner() {
       <section class="panel"><div class="sec-head"><h2>${t('own.topActions')}</h2></div>${bars(s.topActions, (x) => actName(x.name))}</section>
       <section class="panel own-feed-p"><div class="sec-head"><h2>${t('own.feed')}</h2><span class="count">${O.feed?.length || 0}</span></div>
         <div class="own-feed">${(O.feed || []).map((e) => `<div class="own-ev k-${e.kind}">
-          <span class="own-ev-ic">${icon(e.kind === 'visit' ? 'home' : e.kind === 'page' ? 'book' : 'bolt', 14)}</span>
-          <span class="own-ev-main"><b>${esc(e.kind === 'page' ? pageName(e.name) : e.kind === 'action' ? actName(e.name) : t('own.visit') + ' ' + e.name)}</b>
+          <span class="own-ev-ic">${evIcon(e)}</span>
+          <span class="own-ev-main"><b>${esc(e.kind === 'page' ? pageName(e.name) : e.kind === 'action' ? actName(e.name) : t('own.visit') + ' ' + String(e.name).replace(/^from /, '').replace(/^direct$/, t('own.direct')))}</b>
             <small>${esc(e.email || (ROLE[e.role] || e.role) + ' #' + String(e.session_id).slice(0, 5))}, ${esc(e.device || '')}</small></span>
           <time>${fmtDate(new Date(e.created_at).getTime())}</time></div>`).join('') || `<p class="empty">${t('own.empty')}</p>`}</div>
       </section>

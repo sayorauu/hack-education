@@ -303,4 +303,5 @@ export const kk = {
   'own.km': 'км', 'own.kmAway': '≈ {n} км бізден', 'own.near': 'біздің жанымызда',
 
   'own.grp_guest': 'Қонақтар', 'own.grp_user': 'Оқушылар (пошта / Google)', 'own.grp_jury': 'Қазылар', 'own.grpAvg': 'бір адамға орта есеппен {a}', 'own.grpTop': 'ең ұзақ: {who}, {t}',
+  'own.direct': 'тікелей',
 };

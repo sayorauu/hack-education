@@ -1826,3 +1826,10 @@ html[data-motion='off'] .ca, html[data-motion='off'] .ca::after { animation: non
 .own-rc-big { font-size: 28px; font-weight: 750; letter-spacing: -.02em; margin-top: 6px; }
 .own-rc small { color: var(--dim); font-size: 12.5px; }
 @media (max-width: 900px) { .own-roles { grid-template-columns: 1fr; } }
+/* иконки ленты «Последние действия» */
+.own-ev-ic { width: 34px; height: 34px; border-radius: 11px; }
+.own-ev-ic .nav-ic { width: 19px; height: 19px; }
+.own-ev.k-page .own-ev-ic { background: var(--lilac); color: var(--lilac-ink); }
+.own-ev.k-visit .own-ev-ic { background: var(--mint); color: var(--mint-ink); }
+.own-ev.k-action .own-ev-ic { background: var(--cream); color: var(--cream-ink); }
+.own-ev { grid-template-columns: 34px minmax(0, 1fr) auto; }

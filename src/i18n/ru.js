@@ -302,4 +302,5 @@ export const ru = {
   'own.km': 'км', 'own.kmAway': '≈ {n} км от нас', 'own.near': 'рядом с нами',
 
   'own.grp_guest': 'Гости', 'own.grp_user': 'Ученики (почта / Google)', 'own.grp_jury': 'Жюри', 'own.grpAvg': 'в среднем {a} на человека', 'own.grpTop': 'дольше всех: {who}, {t}',
+  'own.direct': 'напрямую',
 };

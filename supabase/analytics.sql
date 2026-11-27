@@ -1,13 +1,3 @@
--- NASstudy: статистика для главного админа (кто заходил, какие страницы, что нажимали).
--- Запустить один раз: Supabase → SQL Editor → вставить весь файл → Run. Безопасно запускать повторно.
---
--- ВАЖНО: впишите почту главного админа в последней строке файла.
---
--- Что записывается: заход на сайт, открытая страница, название нажатой кнопки,
--- роль (гость / ученик / жюри), тип устройства, язык. НЕ записывается: текст
--- сообщений, ответы, всё, что вводят в поля. Ученик может отключить статистику
--- в Настройках → Приватность.
-
 create table if not exists public.super_admins (
   email text primary key
 );
@@ -58,8 +48,6 @@ begin
   if not public.is_super_admin() then raise exception 'forbidden'; end if;
   return jsonb_build_object(
     'sessions', (select count(distinct session_id) from events where created_at >= since),
-    'visitors', (select count(distinct coalesce(device_id, session_id)) from events where created_at >= since),
-    'totalSecs', (select coalesce(sum(secs), 0) from events where created_at >= since and kind = 'time'),
     'users',    (select count(distinct user_id) from events where created_at >= since and user_id is not null),
     'guests',   (select count(distinct session_id) from events where created_at >= since and role = 'guest'),
     'jury',     (select count(distinct session_id) from events where created_at >= since and role = 'jury'),
@@ -93,82 +81,6 @@ revoke execute on function public.admin_stats(int), public.admin_feed(int) from 
 grant execute on function public.is_super_admin() to anon, authenticated;
 grant execute on function public.admin_stats(int), public.admin_feed(int) to authenticated;
 
-
--- ─── v2: постоянный номер устройства и время на сайте ───────────────────
-alter table public.events add column if not exists device_id text check (device_id is null or char_length(device_id) between 6 and 40);
-alter table public.events add column if not exists secs int check (secs is null or secs between 0 and 600);
-alter table public.events drop constraint if exists events_kind_check;
-alter table public.events add constraint events_kind_check check (kind in ('visit', 'page', 'action', 'time'));
-create index if not exists events_device_idx on public.events (device_id);
-
--- Каждый посетитель = устройство (+ аккаунт, если вошёл). Жюри или гость с другого устройства — новый посетитель.
-create or replace function public.admin_users(p_days int default 30)
-returns table (visitor text, user_id uuid, email text, role text, device text, first_seen timestamptz, last_seen timestamptz,
-               total_secs bigint, sessions bigint, pages bigint, actions bigint)
-language plpgsql stable security definer set search_path = public, auth as $$
-declare since timestamptz := now() - make_interval(days => greatest(1, least(coalesce(p_days, 30), 365)));
-begin
-  if not public.is_super_admin() then raise exception 'forbidden'; end if;
-  return query
-    select coalesce(e.device_id, e.session_id) as visitor,
-           e.user_id,
-           max(u.email)::text,
-           (array_agg(e.role order by e.created_at desc))[1],
-           (array_agg(e.device order by e.created_at desc))[1],
-           min(e.created_at), max(e.created_at),
-           coalesce(sum(e.secs) filter (where e.kind = 'time'), 0)::bigint,
-           count(distinct e.session_id)::bigint,
-           count(*) filter (where e.kind = 'page')::bigint,
-           count(*) filter (where e.kind = 'action')::bigint
-    from public.events e left join auth.users u on u.id = e.user_id
-    where e.created_at >= since
-    group by 1, 2
-    order by max(e.created_at) desc
-    limit 500;
-end;
-$$;
-revoke execute on function public.admin_users(int) from anon, public;
-grant execute on function public.admin_users(int) to authenticated;
-
--- ─── v3: примерное место посетителя (по IP, округлено до ~1 км) ───────
-alter table public.events add column if not exists city text check (city is null or char_length(city) <= 40);
-alter table public.events add column if not exists country text check (country is null or char_length(country) <= 4);
-alter table public.events add column if not exists lat numeric(5,2) check (lat is null or lat between -90 and 90);
-alter table public.events add column if not exists lon numeric(5,2) check (lon is null or lon between -180 and 180);
-
--- Отчёт по посетителям теперь с местом первого захода / регистрации
-drop function if exists public.admin_users(int);
-create or replace function public.admin_users(p_days int default 30)
-returns table (visitor text, user_id uuid, email text, role text, device text, first_seen timestamptz, last_seen timestamptz,
-               total_secs bigint, sessions bigint, pages bigint, actions bigint, city text, country text, lat numeric, lon numeric)
-language plpgsql stable security definer set search_path = public, auth as $$
-declare since timestamptz := now() - make_interval(days => greatest(1, least(coalesce(p_days, 30), 365)));
-begin
-  if not public.is_super_admin() then raise exception 'forbidden'; end if;
-  return query
-    select coalesce(e.device_id, e.session_id) as visitor,
-           e.user_id,
-           max(u.email)::text,
-           (array_agg(e.role order by e.created_at desc))[1],
-           (array_agg(e.device order by e.created_at desc))[1],
-           min(e.created_at), max(e.created_at),
-           coalesce(sum(e.secs) filter (where e.kind = 'time'), 0)::bigint,
-           count(distinct e.session_id)::bigint,
-           count(*) filter (where e.kind = 'page')::bigint,
-           count(*) filter (where e.kind = 'action')::bigint,
-           (array_agg(e.city order by e.created_at) filter (where e.city is not null))[1],
-           (array_agg(e.country order by e.created_at) filter (where e.country is not null))[1],
-           (array_agg(e.lat order by e.created_at) filter (where e.lat is not null))[1],
-           (array_agg(e.lon order by e.created_at) filter (where e.lon is not null))[1]
-    from public.events e left join auth.users u on u.id = e.user_id
-    where e.created_at >= since
-    group by 1, 2
-    order by max(e.created_at) desc
-    limit 500;
-end;
-$$;
-revoke execute on function public.admin_users(int) from anon, public;
-grant execute on function public.admin_users(int) to authenticated;
-
--- ▼ Впишите сюда почту главного админа (ту, с которой вы входите на сайт) и запустите файл
-insert into public.super_admins (email) values ('ВАША_ПОЧТА@gmail.com') on conflict do nothing;
+-- Главный админ уже добавлен при первом запуске. Чтобы добавить ещё одного,
+-- уберите «--» в начале строки ниже, впишите почту и запустите только эту строку:
+-- insert into public.super_admins (email) values ('почта@gmail.com') on conflict do nothing;
