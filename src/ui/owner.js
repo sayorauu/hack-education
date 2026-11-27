@@ -8,10 +8,30 @@ import { icon } from './icons.js';
 import { t, tf, fmtDate } from '../i18n.js';
 import { header, esc, fmt } from './kit.js';
 import { action } from './dom.js';
-import { rest, isLoggedIn } from '../cloud/auth.js';
-import { isOwner } from '../cloud/track.js';
+import { rest, isLoggedIn, myId } from '../cloud/auth.js';
+import { isOwner, deviceId } from '../cloud/track.js';
 
-const O = { days: 7, stats: null, feed: null, err: '', loading: false, at: 0 };
+const O = { days: 7, stats: null, feed: null, users: null, err: '', loading: false, at: 0, hideOwn: false, q: '' };
+const OWN_KEY = 'nasstudy.ownDevices';
+const ownList = () => { try { return JSON.parse(localStorage.getItem(OWN_KEY) || '[]'); } catch { return []; } };
+/* Наше место и радиус: всё, что ближе, считаем «нами» */
+const PLACE_KEY = 'nasstudy.ourPlace';
+const getPlace = () => { try { return JSON.parse(localStorage.getItem(PLACE_KEY) || 'null'); } catch { return null; } };
+const setPlace = (p) => { try { localStorage.setItem(PLACE_KEY, JSON.stringify(p)); } catch { /* память */ } };
+/** Расстояние между двумя точками по поверхности Земли, км */
+function km(a, b) {
+  const R = 6371, rad = (x) => (x * Math.PI) / 180;
+  const dLat = rad(b.lat - a.lat), dLon = rad(b.lon - a.lon);
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(rad(a.lat)) * Math.cos(rad(b.lat)) * Math.sin(dLon / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(h));
+}
+const distOf = (r) => { const p = getPlace(); return p && p.lat != null && r.lat != null ? km(p, { lat: Number(r.lat), lon: Number(r.lon) }) : null; };
+const isNear = (r) => { const p = getPlace(); const d = distOf(r); return d != null && d <= (p?.radius || 3); };
+/** «Мы»: это устройство (тут был и главный админ, и вход жюри), отмеченные устройства,
+ *  аккаунт главного админа и все, кто зашёл рядом с нашей точкой. */
+const isOwn = (v, uid, r) => v === deviceId() || ownList().includes(v) || (uid && uid === myId()) || (r ? isNear(r) : false);
+/** 3725 → «1 ч 2 мин», 95 → «1 мин 35 с» */
+const dur = (sec) => { const s = Math.round(Number(sec) || 0); const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60); return h ? `${h} ${t('own.h')} ${m} ${t('own.m')}` : m ? `${m} ${t('own.m')} ${s % 60} ${t('own.s')}` : `${s} ${t('own.s')}`; };
 let rerenderRef = () => {};
 let timer = null;
 
@@ -27,11 +47,12 @@ async function load(force = false) {
   if (!force && Date.now() - O.at < 10000) return;
   O.loading = true;
   try {
-    const [stats, feed] = await Promise.all([
+    const [stats, feed, users] = await Promise.all([
       rest('/rest/v1/rpc/admin_stats', { method: 'POST', body: { p_days: O.days } }),
       rest('/rest/v1/rpc/admin_feed', { method: 'POST', body: { p_limit: 60 } }),
+      rest('/rest/v1/rpc/admin_users', { method: 'POST', body: { p_days: O.days } }).catch(() => null), // если v2 ещё не запущен
     ]);
-    O.stats = stats; O.feed = feed; O.err = '';
+    O.stats = stats; O.feed = feed; O.users = users; O.err = '';
   } catch (e) {
     O.err = /forbidden/i.test(e.message) ? t('own.forbidden') : /PGRST202|42883|could not find/i.test(`${e.code} ${e.message}`) ? t('own.setup') : t('own.error');
   }
@@ -44,6 +65,47 @@ const bars = (list, label, key = 'c') => {
   const max = Math.max(...list.map((x) => x[key]));
   return `<div class="own-bars">${list.map((x) => `<div class="own-bar"><span>${esc(label(x))}</span><div class="bar"><i style="width:${Math.max(4, Math.round((100 * x[key]) / max))}%"></i></div><b>${fmt(x[key])}</b></div>`).join('')}</div>`;
 };
+
+function visitorsHtml() {
+  if (!O.users) return `<section class="panel own-vis"><div class="sec-head"><h2>${t('own.visitorsT')}</h2></div><p class="note">${t('own.visSetup')}</p></section>`;
+  const ROLE_IC = { guest: 'user', user: 'check', jury: 'trophy' };
+  const maxSecs = Math.max(1, ...O.users.map((x) => Number(x.total_secs || 0)));
+  const all = O.users.map((u) => ({ ...u, own: isOwn(u.visitor, u.user_id, u) }));
+  const match = (r) => !O.q || `${r.email || ''} ${r.visitor} ${ROLE[r.role] || ''}`.toLowerCase().includes(O.q.toLowerCase());
+  const others = all.filter((r) => !r.own && match(r));
+  const ours = all.filter((r) => r.own && match(r));
+  const label = (r) => r.email || `${ROLE[r.role] || r.role} #${String(r.visitor).slice(-5).toUpperCase()}`;
+  const sum = (rows) => rows.reduce((a, r) => a + Number(r.total_secs || 0), 0);
+  const row = (r) => `<div class="own-tr ${r.own ? 'own-mine' : ''}">
+        <span class="own-who"><span class="own-av r-${r.role}">${icon(ROLE_IC[r.role] || 'user', 15)}</span><span><b>${esc(label(r))}</b><small>${ROLE[r.role] || r.role}, ${esc(r.device || '?')}${r.city ? `, ${esc(r.city)}` : ''}${distOf(r) != null ? `, ${tf('own.kmAway', { n: distOf(r) < 1 ? '<1' : Math.round(distOf(r)) })}` : ''}${r.visitor === deviceId() ? `, <em>${t('own.thisDevice')}</em>` : isNear(r) ? `, <em>${t('own.near')}</em>` : ''}</small></span></span>
+        <span class="own-time"><b>${dur(r.total_secs)}</b><i style="width:${Math.max(3, Math.round(100 * Number(r.total_secs || 0) / maxSecs))}%"></i></span>
+        <span>${fmt(r.sessions)}</span>
+        <span>${fmt(r.pages)} / ${fmt(r.actions)}</span>
+        <span class="own-last">${fmtDate(new Date(r.last_seen).getTime())}</span>
+        <span>${r.visitor === deviceId() || (r.user_id && r.user_id === myId()) ? '' : `<button class="btn btn-soft btn-sm" data-act="own-mark" data-id="${esc(r.visitor)}">${t(r.own ? 'own.unmark' : 'own.mark')}</button>`}</span>
+      </div>`;
+  const head = `<div class="own-tr own-th"><span>${t('own.colWho')}</span><span>${t('own.colTime')}</span><span>${t('own.colVisits')}</span><span>${t('own.colPages')}</span><span>${t('own.colLast')}</span><span></span></div>`;
+  const pl = getPlace();
+  const placePanel = `<section class="panel own-place">
+    <span class="own-place-ic">${icon('target', 20)}</span>
+    <div><b>${t('own.placeT')}</b><small>${pl ? tf('own.placeIs', { c: esc(pl.city || '?'), lat: pl.lat, lon: pl.lon }) : t('own.placeNone')}</small></div>
+    <div class="chips">${[1, 3, 10, 30].map((r) => `<button class="chip ${(pl?.radius || 3) === r ? 'on' : ''}" data-act="own-radius" data-id="${r}" ${pl ? '' : 'disabled'}>${r} ${t('own.km')}</button>`).join('')}</div>
+    <button class="btn btn-soft btn-sm" data-act="own-place">${icon('target', 14)} ${t(pl ? 'own.placeUpdate' : 'own.placeSet')}</button>
+  </section>`;
+  return `${placePanel}<section class="panel own-vis">
+    <div class="sec-head"><h2>${t('own.othersT')}</h2><span class="count">${others.length}</span></div>
+    <div class="own-vis-bar">
+      <label class="search own-search">${icon('search', 16)}<input id="ownQ" placeholder="${esc(t('own.searchPh'))}" value="${esc(O.q)}"></label>
+      <span class="own-sum">${tf('own.sum', { n: others.length, t: dur(sum(others)), a: dur(others.length ? sum(others) / others.length : 0) })}</span>
+    </div>
+    <div class="own-table">${head}${others.map(row).join('') || `<p class="empty">${t('own.noOthers')}</p>`}</div>
+  </section>
+  <details class="panel own-vis own-ours" ${O.showOurs ? 'open' : ''}>
+    <summary class="sec-head"><h2>${t('own.oursT')}</h2><span class="count">${ours.length}</span><span class="own-sum">${tf('own.oursSum', { t: dur(sum(ours)) })}</span></summary>
+    <p class="note" style="margin:4px 0 10px">${t('own.oursNote')}</p>
+    <div class="own-table">${head}${ours.map(row).join('')}</div>
+  </details>`;
+}
 
 export function renderOwner() {
   if (!isLoggedIn() || !isOwner()) {
@@ -65,13 +127,14 @@ export function renderOwner() {
     ${O.err ? `<div class="fr-err">${icon('shield', 16)}<span>${esc(O.err)}</span></div>` : ''}
     ${!s ? (O.err ? '' : `<p class="empty"><span class="spin"></span></p>`) : `
     <div class="own-kpis">
-      ${kpi('users', 'lilac', fmt(s.sessions), t('own.sessions'))}
+      ${kpi('users', 'lilac', fmt(s.visitors ?? s.sessions), t('own.visitors'))}
+      ${kpi('clock', 'sky', dur(s.totalSecs || 0), t('own.totalTime'))}
       ${kpi('user', 'mint', fmt(s.users), t('own.users'))}
       ${kpi('trophy', 'cream', fmt(s.jury), t('own.jury'))}
       ${kpi('sparkles', 'sky', fmt(s.signups), t('own.signups'))}
-      ${kpi('book', 'lilac', fmt(s.pages), t('own.pages'))}
       ${kpi('bolt', 'mint', fmt(s.actions), t('own.actions'))}
     </div>
+    ${visitorsHtml()}
     <div class="own-grid">
       <section class="panel"><div class="sec-head"><h2>${t('own.byDay')}</h2></div>
         <div class="own-days">${days.map((d) => `<span class="own-day" title="${d.s} · ${d.e}"><i style="height:${Math.max(6, Math.round((100 * d.s) / maxDay))}%"></i><em>${new Date(d.d).getDate()}</em></span>`).join('') || `<p class="empty">${t('own.empty')}</p>`}</div>
@@ -92,5 +155,26 @@ export function renderOwner() {
 
 export function registerOwnerActions(rerender) {
   rerenderRef = rerender;
-  action('own-days', ({ id }) => { O.days = Number(id) || 7; O.stats = null; rerender(); load(true); });
+  action('own-days', ({ id }) => { O.days = Number(id) || 7; O.stats = null; O.users = null; rerender(); load(true); });
+  document.addEventListener('toggle', (e) => { if (e.target?.classList?.contains('own-ours')) O.showOurs = e.target.open; }, true);
+  action('own-place', async () => {
+    try {
+      const g = await (await fetch('/api/geo', { cache: 'no-store' })).json();
+      if (g?.lat == null) { alert(t('own.placeFail')); return; }
+      setPlace({ ...g, radius: getPlace()?.radius || 3 });
+      rerender();
+    } catch { alert(t('own.placeFail')); }
+  });
+  action('own-radius', ({ id }) => { const p = getPlace(); if (!p) return; setPlace({ ...p, radius: Number(id) || 3 }); rerender(); });
+  action('own-mark', ({ id }) => {
+    const list = ownList();
+    const next = list.includes(id) ? list.filter((x) => x !== id) : [...list, id];
+    try { localStorage.setItem(OWN_KEY, JSON.stringify(next)); } catch { /* память */ }
+    rerender();
+  });
+  document.addEventListener('input', (e) => {
+    if (e.target?.id !== 'ownQ') return;
+    O.q = e.target.value;
+    clearTimeout(O.qt); O.qt = setTimeout(rerender, 250);
+  });
 }

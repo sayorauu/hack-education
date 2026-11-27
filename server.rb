@@ -221,6 +221,13 @@ server.mount_proc('/api/admin') do |req, res|
     json(res, 401, error: 'wrong_pin')
   end
 end
+# /api/geo — локально города по IP нет: отвечаем пустыми значениями (на Vercel работает api/geo.js)
+server.mount_proc('/api/geo') do |_req, res|
+  res['Content-Type'] = 'application/json'
+  res['Cache-Control'] = 'no-store'
+  res.body = JSON.generate({ city: nil, country: nil, lat: nil, lon: nil })
+end
+
 server.mount_proc('/api/config') do |_req, res|
   env = load_env
   url = (ENV['SUPABASE_URL'] || env['SUPABASE_URL']).to_s.strip
