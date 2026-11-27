@@ -92,7 +92,19 @@ function visitorsHtml() {
     <div class="chips">${[1, 3, 10, 30].map((r) => `<button class="chip ${(pl?.radius || 3) === r ? 'on' : ''}" data-act="own-radius" data-id="${r}" ${pl ? '' : 'disabled'}>${r} ${t('own.km')}</button>`).join('')}</div>
     <button class="btn btn-soft btn-sm" data-act="own-place">${icon('target', 14)} ${t(pl ? 'own.placeUpdate' : 'own.placeSet')}</button>
   </section>`;
-  return `${placePanel}<section class="panel own-vis">
+  // Сводка по группам: сколько времени в сумме и в среднем проводят гости, ученики и жюри (без нас)
+  const byRole = ['guest', 'user', 'jury'].map((role) => {
+    const list = all.filter((r) => !r.own && r.role === role);
+    const total = sum(list);
+    return { role, n: list.length, total, avg: list.length ? total / list.length : 0, top: list.slice().sort((a, b) => Number(b.total_secs) - Number(a.total_secs))[0] };
+  });
+  const roleCards = `<div class="own-roles">${byRole.map((g) => `<div class="own-rc r-${g.role}">
+      <div class="own-rc-h"><span class="own-av r-${g.role}">${icon(ROLE_IC[g.role], 15)}</span><b>${t('own.grp_' + g.role)}</b><span class="count">${g.n}</span></div>
+      <p class="own-rc-big">${dur(g.total)}</p>
+      <small>${tf('own.grpAvg', { a: dur(g.avg) })}</small>
+      ${g.top && Number(g.top.total_secs) > 0 ? `<small>${tf('own.grpTop', { who: esc(label(g.top)), t: dur(g.top.total_secs) })}</small>` : ''}
+    </div>`).join('')}</div>`;
+  return `${placePanel}${roleCards}<section class="panel own-vis">
     <div class="sec-head"><h2>${t('own.othersT')}</h2><span class="count">${others.length}</span></div>
     <div class="own-vis-bar">
       <label class="search own-search">${icon('search', 16)}<input id="ownQ" placeholder="${esc(t('own.searchPh'))}" value="${esc(O.q)}"></label>

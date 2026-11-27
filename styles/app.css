@@ -1819,3 +1819,10 @@ html[data-motion='off'] .ca, html[data-motion='off'] .ca::after { animation: non
 .own-place > div:nth-child(2) { flex: 1; min-width: 240px; display: grid; gap: 2px; }
 .own-place small { color: var(--dim); font-size: 12.5px; line-height: 1.4; }
 .own-place-ic { width: 42px; height: 42px; border-radius: 14px; display: grid; place-items: center; background: var(--mint); color: var(--mint-ink); flex: none; }
+.own-roles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-bottom: 18px; }
+.own-rc { display: grid; gap: 4px; padding: 18px 20px; border-radius: 22px; background: var(--soft); border: 1px solid var(--line); }
+.own-rc.r-jury { background: color-mix(in srgb, #FFF1C9 55%, var(--soft)); }
+.own-rc-h { display: flex; align-items: center; gap: 10px; } .own-rc-h b { flex: 1; font-size: 15px; }
+.own-rc-big { font-size: 28px; font-weight: 750; letter-spacing: -.02em; margin-top: 6px; }
+.own-rc small { color: var(--dim); font-size: 12.5px; }
+@media (max-width: 900px) { .own-roles { grid-template-columns: 1fr; } }
