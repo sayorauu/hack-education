@@ -7,7 +7,7 @@
  * интернет бывает нестабильным или почасовым.
  */
 
-const CACHE = 'nasstudy-v71';
+const CACHE = 'nasstudy-v72';
 
 const ASSETS = [
   './',
