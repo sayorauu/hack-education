@@ -87,7 +87,19 @@ const P = {
  * @param {string} name  ключ из набора
  * @param {number} size  размер в пикселях (по умолчанию наследует кегль текста)
  */
+// Живой огонёк: внешнее пламя колышется, сердцевина мерцает, вверх улетает искра
+const FLAME_OUT = 'M12 21c3.3 0 6-2.4 6-5.6 0-4-3.2-5.6-4-12.4-2.4 1.6-4 4-4 6.4 0 1.6-1 2.4-1.8 1.6-.6-.6-.8-1.6-.8-2.4C5.8 10.4 6 12.4 6 15.4 6 18.6 8.7 21 12 21z';
+const FLAME_IN = 'M12 21c1.9 0 3.3-1.4 3.3-3.2 0-2-1.6-2.9-2-5-1.3.9-2.2 2.2-2.2 3.5 0 .8-.5 1.3-1 .9-.3-.3-.4-.8-.4-1.2C8.8 16 8.7 17 8.7 17.8 8.7 19.6 10.1 21 12 21z';
+function flame(size) {
+  const dim = size ? `width="${size}" height="${size}"` : 'width="1em" height="1em"';
+  return `<svg class="ic fl" viewBox="0 0 24 24" ${dim} aria-hidden="true" focusable="false" overflow="visible">`
+    + `<path class="fl-o" d="${FLAME_OUT}" fill="currentColor" fill-opacity=".2" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>`
+    + `<path class="fl-i" d="${FLAME_IN}" fill="currentColor"/>`
+    + '<circle class="fl-s" cx="15.5" cy="8" r="1" fill="currentColor"/><circle class="fl-s fl-s2" cx="9" cy="9.5" r=".8" fill="currentColor"/></svg>';
+}
+
 export function icon(name, size) {
+  if (name === 'flame') return flame(size);
   const body = P[name];
   if (!body) return '';
   const dim = size ? `width="${size}" height="${size}"` : 'width="1em" height="1em"';
