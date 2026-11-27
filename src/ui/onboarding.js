@@ -34,7 +34,8 @@ function wizardHtml() {
       <div class="ob-choices two">
         ${LANGS.map((l) => `<button type="button" class="ob-choice ${W.lang === l.id ? 'on' : ''}" data-act="ob-lang" data-id="${l.id}">
           <span class="ob-big">${LANG_NAMES[l.id][1]}</span><span>${LANG_NAMES[l.id][0]}</span></button>`).join('')}
-      </div>`;
+      </div>
+      ${true ? `<button type="button" class="auth-jury ob-jury" data-act="ob-jury">${icon('trophy', 18)}<span><b>${t('jury.btn')}</b><small>${t('jury.btnB')}</small></span>${icon('arrowRight', 16)}</button>` : ''}`;
   } else if (W.step === 1) {
     body = `
       <h2>${t('ob.qName')}</h2>
@@ -100,6 +101,11 @@ export function registerOnboardingActions(action, rerender) {
   });
   action('ob-next', () => { if (W.name.trim().length >= 2) go(1); });
   action('ob-back', () => go(-1));
+  action('ob-jury', () => {
+    // Жюри пропускает знакомство: язык уже выбран, имя и класс ставим сами
+    closeModal();
+    setTimeout(() => document.dispatchEvent(new CustomEvent('nas:jury')), 50);
+  });
   action('ob-grade', ({ id }) => { W.grade = Number(id); paintWizard(); });
   action('ob-finish', () => {
     if (!W.grade || W.name.trim().length < 2) return;

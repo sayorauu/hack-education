@@ -11,7 +11,7 @@ import { header, esc, fmt, coin, coinBurst } from './kit.js';
 import { action, toast } from './dom.js';
 
 const KEY = 'nasstudy.admin';
-const unlocked = () => sessionStorage.getItem(KEY) === '1';
+const unlocked = () => sessionStorage.getItem(KEY) === '1' || Boolean(getProfile().jury); // жюри — без PIN
 let err = '';
 let busy = false;
 

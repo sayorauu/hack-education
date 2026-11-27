@@ -101,6 +101,15 @@ export async function signUp(email, password) {
   return 'confirm';
 }
 
+/** Вход без пароля (анонимный аккаунт Supabase): для жюри. Нужно включить
+ *  Authentication → Sign In / Providers → «Allow anonymous sign-ins». */
+export async function signInAnonymously() {
+  const d = await api('/auth/v1/signup', { method: 'POST', body: { data: { role: 'jury' } } });
+  if (!d?.access_token) throw new Error('anonymous_failed');
+  setSession(d);
+  await afterLogin();
+}
+
 export async function signIn(email, password) {
   const d = await api('/auth/v1/token?grant_type=password', { method: 'POST', body: { email, password } });
   setSession(d);

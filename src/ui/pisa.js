@@ -2,12 +2,23 @@ import { icon } from './icons.js';
 import { play } from '../sound.js';
 import { t, tf, loc, fmtDate } from '../i18n.js';
 import { getProfile, getSettings, update, recordPisa, COINS } from '../state.js';
-import { PISA_ITEMS, PISA_STIMULI, PISA_AVG, scorePisa } from '../data/pisa.js';
+import { PISA_SETS, PISA_STIMULI, PISA_AVG, scorePisa } from '../data/pisa.js';
 import { header, esc, coinBurst, openModal, closeModal, kapiSvg } from './kit.js';
 import { action } from './dom.js';
 import { requireAuth } from './auth.js';
 
-let P = { phase: 'intro', idx: 0, answers: {}, result: null, t0: 0 };
+let P = { phase: 'intro', idx: 0, answers: {}, result: null, t0: 0, set: 'v1', order: {} };
+const ITEMS = () => PISA_SETS[P.set || 'v1'].items;
+/** Варианты ответа перемешиваются при каждом прохождении, чтобы верный не стоял всегда под «A». */
+function shuffleOrder(items) {
+  const order = {};
+  for (const q of items) {
+    const a = q.options.map((_, i) => i);
+    for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+    order[q.id] = a;
+  }
+  return order;
+}
 let rerenderRef = () => {};
 
 /* ─── Режим фокуса: весь экран, ничего лишнего ───────────────────────────
@@ -18,7 +29,7 @@ let rerenderRef = () => {};
 let clockOn = Boolean(getSettings().pisaClock);
 let clockTimer = null;
 let wantFs = false; // ученик в полноэкранном режиме (или хотел в него)
-const RECOMMENDED_MIN = () => Math.round(PISA_ITEMS.length * 1.5);
+const RECOMMENDED_MIN = () => Math.round(ITEMS().length * 1.5);
 
 const fsEl = () => document.fullscreenElement || document.webkitFullscreenElement;
 function enterFs() {
@@ -58,14 +69,27 @@ function stimulusHtml(key) {
 }
 
 function intro() {
-  const hist = getProfile().pisa.slice(0, 3);
+  const all = getProfile().pisa;
+  const hist = all.slice(0, 4);
+  const best = (id) => all.filter((r) => (r.variant || 'v1') === id).reduce((m, r) => Math.max(m, r.total), 0);
+  const setCard = (set, n) => {
+    const b = best(set.id);
+    const [head, name] = loc(set.title).split(' · ');
+    return `<article class="pv-card pv-${set.id}">
+      <div class="pv-top"><span class="pv-num">${n}</span><span class="pv-tag">${esc(head)}</span>${b ? `<span class="pv-best">${icon('trophy', 13)} ${tf('pisa.best', { n: b })}</span>` : `<span class="pv-new">${t('pisa.notYet')}</span>`}</div>
+      <h3>${esc(name || head)}</h3>
+      <p class="note">${esc(loc(set.topics))}</p>
+      <div class="pv-meta"><span>${icon('stack', 14)} ${tf('pisa.nTasks', { n: set.items.length })}</span><span>${icon('clock', 14)} ~${Math.round(set.items.length * 1.5)} ${t('pisa.min')}</span><span>${icon('target', 14)} ${t('pisa.mixed')}</span></div>
+      <button class="btn pv-go" data-act="pisa-start" data-id="${set.id}">${icon('play', 16)} ${t(b ? 'pisa.retake' : 'pisa.start')}</button>
+    </article>`;
+  };
+  const step = (ic, k) => `<div class="pv-step"><span class="pv-step-ic">${icon(ic, 18)}</span><span><b>${t('pisa.' + k + 'T')}</b><small>${t('pisa.' + k + 'B')}</small></span></div>`;
   return `
     <section class="hero page-enter">
       <div>
         <h2>PISA ${icon('target', 26)}</h2>
         <p>${t('pisa.what')}</p>
-        <p style="margin-top:12px;font-weight:650;color:var(--text)">${t('pisa.format')}</p>
-        <button class="btn" style="margin-top:22px" data-act="pisa-start">${icon('play', 16)} ${t('pisa.start')}</button>
+        <div class="pv-steps">${step('lock', 'h1')}${step('clock', 'h2')}${step('check', 'h3')}</div>
       </div>
       <div class="avg-box">
         <b>${t('pisa.avg')}</b>
@@ -75,22 +99,24 @@ function intro() {
         <p class="note">${tf('pisa.source', { s: PISA_AVG.source })}</p>
       </div>
     </section>
-    ${hist.length ? `<section style="margin-top:28px"><div class="sec-head"><h2>${t('pisa.history')}</h2></div>
+    <div class="sec-head" style="margin-top:30px"><h2>${t('pisa.choose')}</h2><span class="count">${Object.keys(PISA_SETS).length}</span></div>
+    <div class="pv-grid">${Object.values(PISA_SETS).map((set, i) => setCard(set, i + 1)).join('')}</div>
+    ${hist.length ? `<section style="margin-top:30px"><div class="sec-head"><h2>${t('pisa.history')}</h2></div>
       <div style="display:grid;gap:8px">${hist.map((r) => `<div class="lb-row pisa-hist">
-        <span class="ph-date">${fmtDate(r.ts, { year: true })}</span>
+        <span class="ph-date">${fmtDate(r.ts, { year: true })}<small class="ph-var">${esc(loc(PISA_SETS[r.variant || 'v1'].title).split(' · ')[0])}</small></span>
         <span>${t('pisa.math')}: <b>${r.math.score}</b></span><span>${t('pisa.reading')}: <b>${r.reading.score}</b></span><b class="ph-total">${r.total}</b></div>`).join('')}</div></section>` : ''}`;
 }
 
 function test() {
-  const q = PISA_ITEMS[P.idx];
+  const q = ITEMS()[P.idx];
   const sel = P.answers[q.id];
-  const steps = PISA_ITEMS.map((x, i) => `<i class="${i === P.idx ? 'now' : P.answers[x.id] !== undefined ? 'ok' : ''}"></i>`).join('');
+  const steps = ITEMS().map((x, i) => `<i class="${i === P.idx ? 'now' : P.answers[x.id] !== undefined ? 'ok' : ''}"></i>`).join('');
   const domain = q.domain === 'math' ? t('pisa.math') : t('pisa.reading');
   const done = Object.keys(P.answers).length;
   const fsOn = Boolean(fsEl());
   return `
     <div class="pf-bar">
-      <div class="pf-left"><span class="pf-ic">${icon('target', 18)}</span><span><b>PISA</b><small>${tf('pisa.answered', { a: done, n: PISA_ITEMS.length })}</small></span></div>
+      <div class="pf-left"><span class="pf-ic">${icon('target', 18)}</span><span><b>PISA</b><small>${tf('pisa.answered', { a: done, n: ITEMS().length })}</small></span></div>
       <div class="pf-mid">${clockOn ? `<span class="pf-clock" title="${esc(tf('pisa.clockHint', { n: RECOMMENDED_MIN() }))}">${icon('clock', 16)}<b id="pisaClock">${mmss(Date.now() - P.t0)}</b><small>/ ~${RECOMMENDED_MIN()} ${t('pisa.min')}</small></span>` : ''}</div>
       <div class="pf-right">
         <button class="pf-btn ${clockOn ? 'on' : ''}" data-act="pisa-clock" aria-pressed="${clockOn}" title="${esc(t('pisa.clockTip'))}">${icon('clock', 17)}<span>${t(clockOn ? 'pisa.clockOff' : 'pisa.clockOn')}</span></button>
@@ -102,14 +128,14 @@ function test() {
       ${q.stimulus ? stimulusHtml(q.stimulus) : ''}
       <section class="qcard page-enter">
         <div class="steps">${steps}</div>
-        <p class="note">${tf('pisa.q', { i: P.idx + 1, n: PISA_ITEMS.length })} · ${domain}</p>
+        <p class="note">${tf('pisa.q', { i: P.idx + 1, n: ITEMS().length })} · ${domain}</p>
         <p class="stem">${esc(loc(q.stem))}</p>
-        <div class="opts">${q.options.map((o, i) => `<button class="opt ${sel === i ? 'sel' : ''}" data-act="pisa-pick" data-i="${i}"><span class="k">${'ABCD'[i]}</span>${esc(loc(o))}</button>`).join('')}</div>
+        <div class="opts">${(P.order[q.id] || q.options.map((_, i) => i)).map((oi, pos) => `<button class="opt ${sel === oi ? 'sel' : ''}" data-act="pisa-pick" data-i="${oi}"><span class="k">${'ABCD'[pos]}</span>${esc(loc(q.options[oi]))}</button>`).join('')}</div>
         <div class="q-actions">
           <button class="btn btn-soft" data-act="pisa-nav" data-d="-1" ${P.idx === 0 ? 'disabled' : ''}>${icon('arrowLeft', 16)} ${t('pisa.prev')}</button>
-          ${P.idx + 1 < PISA_ITEMS.length
+          ${P.idx + 1 < ITEMS().length
             ? `<button class="btn" data-act="pisa-nav" data-d="1" ${sel === undefined ? 'disabled' : ''}>${t('pisa.next')} ${icon('arrowRight', 16)}</button>`
-            : `<button class="btn btn-accent" data-act="pisa-finish" ${Object.keys(P.answers).length < PISA_ITEMS.length ? 'disabled' : ''}>${t('pisa.finish')}</button>`}
+            : `<button class="btn btn-accent" data-act="pisa-finish" ${Object.keys(P.answers).length < ITEMS().length ? 'disabled' : ''}>${t('pisa.finish')}</button>`}
         </div>
       </section>
     </div>`;
@@ -151,11 +177,11 @@ function result() {
     <div class="verdict ${above ? 'up' : 'down'} page-enter">${icon(above ? 'trophy' : 'trend', 24)} ${t(above ? 'pisa.verdictAbove' : 'pisa.verdictBelow')} · ${t('pisa.score')}: ${r.total}</div>
     <div class="res-grid">${card('math', t('pisa.math'))}${card('reading', t('pisa.reading'))}</div>
     <p class="note" style="margin-top:14px">${t('pisa.disclaimer')} ${tf('pisa.source', { s: PISA_AVG.source })}</p>
-    <div class="q-actions"><button class="btn" data-act="pisa-start">${t('pisa.retake')}</button><a class="btn btn-soft" href="#/friends?share=pisa">${icon('send', 15)} ${t('fr.shareFriend')}</a><a class="btn btn-soft" href="#/topics">${t('nav.topics')}</a></div>
+    <div class="q-actions"><button class="btn" data-act="pisa-start" data-id="${P.set}">${t('pisa.retake')}</button>${Object.keys(PISA_SETS).filter((k) => k !== P.set).map((k) => `<button class="btn btn-soft" data-act="pisa-start" data-id="${k}">${icon('play', 15)} ${esc(loc(PISA_SETS[k].title).split(' · ')[0])}</button>`).join('')}<a class="btn btn-soft" href="#/friends?share=pisa">${icon('send', 15)} ${t('fr.shareFriend')}</a><a class="btn btn-soft" href="#/topics">${t('nav.topics')}</a></div>
     <section style="margin-top:30px">
       <div class="sec-head"><h2>${t('pisa.review')}</h2></div>
       <div style="display:grid;gap:12px">
-        ${PISA_ITEMS.map((q, i) => {
+        ${ITEMS().map((q, i) => {
           const ok = P.answers[q.id] === q.answer;
           return `<div class="fb ${ok ? 'ok' : 'bad'}" style="margin:0">
             <h4>${icon(ok ? 'check' : 'cross', 16)} ${i + 1}. ${esc(loc(q.stem))}</h4>
@@ -178,7 +204,7 @@ function loading() {
       <h2>${t('pisa.loadTitle')}</h2>
       <div class="pl-bar"><i></i></div>
       <ul class="pl-steps">${['load1', 'load2', 'load3'].map((k, i) => `<li style="animation-delay:${0.25 + i * 0.75}s">${icon('check', 14)} ${t('pisa.' + k)}</li>`).join('')}</ul>
-      <p class="note">${tf('pisa.loadNote', { n: PISA_ITEMS.length })}</p>
+      <p class="note">${tf('pisa.loadNote', { n: ITEMS().length })}</p>
     </section>`;
 }
 
@@ -201,12 +227,13 @@ export function animatePisa() {
 export function registerPisaActions(rerender) {
   rerenderRef = rerender;
   // Перед тестом — короткая загрузка (~2,6 с): ученик успевает настроиться
-  action('pisa-start', () => {
+  action('pisa-start', ({ id }) => {
     if (P.phase === 'loading') return;
+    const set = PISA_SETS[id] ? id : (P.set || 'v1');
     clockOn = Boolean(getSettings().pisaClock);
     if (!requireAuth('auth.rPisa')) return;
     enterFs(); // нужен клик ученика — поэтому здесь, а не после загрузки
-    P = { phase: 'loading', idx: 0, answers: {}, result: null, t0: 0 };
+    P = { phase: 'loading', idx: 0, answers: {}, result: null, t0: 0, set, order: shuffleOrder(PISA_SETS[set].items) };
     rerender(); window.scrollTo({ top: 0 });
     setTimeout(() => {
       if (P.phase !== 'loading') return;
@@ -216,15 +243,15 @@ export function registerPisaActions(rerender) {
       rerender(); window.scrollTo({ top: 0 });
     }, LOAD_MS);
   });
-  action('pisa-pick', ({ i }) => { P.answers[PISA_ITEMS[P.idx].id] = Number(i); rerender(); });
-  action('pisa-nav', ({ d }) => { P.idx = Math.max(0, Math.min(PISA_ITEMS.length - 1, P.idx + Number(d))); rerender(); window.scrollTo({ top: 0, behavior: 'smooth' }); });
+  action('pisa-pick', ({ i }) => { P.answers[ITEMS()[P.idx].id] = Number(i); rerender(); });
+  action('pisa-nav', ({ d }) => { P.idx = Math.max(0, Math.min(ITEMS().length - 1, P.idx + Number(d))); rerender(); window.scrollTo({ top: 0, behavior: 'smooth' }); });
   action('pisa-clock', () => { clockOn = !clockOn; update((s) => { s.settings.pisaClock = clockOn; }); rerender(); });
   action('pisa-fs', () => { if (fsEl()) exitFs(); else enterFs(); setTimeout(rerender, 250); });
   action('pisa-exit', () => confirmLeavePisa('#/pisa'));
   action('pisa-finish', () => {
-    P.result = scorePisa(P.answers);
+    P.result = scorePisa(P.answers, ITEMS());
     P.phase = 'result';
-    recordPisa({ ...P.result, answers: { ...P.answers } });
+    recordPisa({ ...P.result, variant: P.set, answers: { ...P.answers } });
     play('lesson');
     rerender();
     window.scrollTo({ top: 0 });
@@ -244,7 +271,7 @@ export function confirmLeavePisa(target) {
     <div class="leave-sheet">
       <span class="leave-ic">${icon('target', 24)}</span>
       <h2>${t('pisa.leaveT')}</h2>
-      <p class="note">${tf('pisa.leaveB', { a: answered, n: PISA_ITEMS.length })}</p>
+      <p class="note">${tf('pisa.leaveB', { a: answered, n: ITEMS().length })}</p>
       <div class="q-actions">
         <button class="btn" data-act="pisa-stay">${t('pisa.stay')}</button>
         <button class="btn btn-soft leave-btn" data-act="pisa-leave" data-to="${esc(target)}">${t('pisa.leave')}</button>
@@ -255,7 +282,7 @@ export function confirmLeavePisa(target) {
 export function registerPisaLeave() {
   action('pisa-stay', () => { closeModal(); if (wantFs && !fsEl()) enterFs(); setTimeout(rerenderRef, 250); });
   action('pisa-leave', ({ to }) => {
-    P = { phase: 'intro', idx: 0, answers: {}, result: null, t0: 0 };
+    P = { phase: 'intro', idx: 0, answers: {}, result: null, t0: 0, set: P.set, order: {} };
     closeModal();
     setFocus(false);
     const dest = to || '#/';

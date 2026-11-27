@@ -9,8 +9,8 @@
 
 import { icon } from './icons.js';
 import { t, tf } from '../i18n.js';
-import { getProfile, resetAll } from '../state.js';
-import { authAvailable, isLoggedIn, currentUser, signIn, signUp, signOut, authErrorKey, syncState, lastSyncedAt, googleEnabled, googleSignIn } from '../cloud/auth.js';
+import { getProfile, resetAll, update } from '../state.js';
+import { authAvailable, isLoggedIn, currentUser, signIn, signUp, signOut, authErrorKey, syncState, lastSyncedAt, googleEnabled, googleSignIn, signInAnonymously } from '../cloud/auth.js';
 import { esc, openModal, closeModal, kapiSvg } from './kit.js';
 import { action, toast } from './dom.js';
 import { fmtDate } from '../i18n.js';
@@ -21,7 +21,8 @@ const GOOGLE_G = '<svg class="g-ic" viewBox="0 0 48 48" width="18" height="18" a
 let A = { mode: 'signup', reason: '', busy: false, err: '', after: null };
 
 /** Можно ли пользоваться основными функциями прямо сейчас. */
-export const canUse = () => !authAvailable() || isLoggedIn();
+export const canUse = () => !authAvailable() || isLoggedIn() || Boolean(getProfile().jury);
+export const isJury = () => Boolean(getProfile().jury);
 
 /** Проверка перед действием: если нельзя — открываем окно входа. */
 export function requireAuth(reasonKey, after) {
@@ -51,6 +52,7 @@ function sheetHtml() {
         ${A.err ? `<p class="auth-err" role="alert">${esc(A.err)}</p>` : ''}
         <button class="btn auth-go" type="submit" ${A.busy ? 'disabled' : ''}>${A.busy ? `<span class="spin"></span>` : icon(signup ? 'sparkles' : 'arrowRight', 16)} ${t(signup ? 'auth.signupBtn' : 'auth.loginBtn')}</button>
       </form>
+      <button type="button" class="auth-jury" data-act="jury-login">${icon('trophy', 18)}<span><b>${t('jury.btn')}</b><small>${t('jury.btnB')}</small></span>${icon('arrowRight', 16)}</button>
       <button type="button" class="auth-guest" data-act="auth-guest">${t('auth.guest')}</button>
       ${signup ? `<p class="note auth-fine">${t('auth.fine')}</p>` : ''}
     </div>`;
@@ -74,6 +76,14 @@ export function openAuth(mode = 'signup', reasonKey = '', after = null) {
 
 /** Блок «Аккаунт» в профиле. */
 export function accountPanel() {
+  if (isJury()) {
+    return `
+      <section class="panel account jury">
+        <span class="acc-ic on">${icon('trophy', 20)}</span>
+        <div><h2>${t('jury.panelT')}</h2><p class="note">${t(isLoggedIn() ? 'jury.panelCloud' : 'jury.panelLocal')}</p></div>
+        <div class="acc-btns"><a class="btn btn-soft" href="#/admin">${icon('shield', 16)} ${t('admin.title')}</a><button class="btn btn-soft" data-act="jury-exit">${icon('logout', 16)} ${t('jury.exit')}</button></div>
+      </section>`;
+  }
   if (!authAvailable()) return '';
   const u = currentUser();
   if (!u) {
@@ -101,6 +111,39 @@ export function registerAuthActions(rerender) {
   action('auth-tab', ({ id }) => { A.mode = id === 'login' ? 'login' : 'signup'; A.err = ''; paint(); });
   action('auth-open', ({ id }) => openAuth(id === 'login' ? 'login' : 'signup'));
   action('auth-guest', () => closeModal());
+  // Вход для жюри: без почты и пароля. Если в Supabase включён анонимный вход,
+  // жюри получает настоящий аккаунт (работают друзья и рейтинг); если нет —
+  // всё равно открываем все функции на этом устройстве.
+  action('jury-login', async (_d, btn) => {
+    if (btn) btn.disabled = true;
+    let cloud = false;
+    if (authAvailable() && !isLoggedIn() && navigator.onLine) {
+      try { await signInAnonymously(); cloud = true; } catch { cloud = false; }
+    }
+    update((st) => {
+      st.profile.jury = true;
+      st.profile.name = st.profile.name || t('jury.name');
+      st.profile.grade = st.profile.grade || 9;
+      st.profile.onboarded = true;
+      st.profile.createdAt = st.profile.createdAt || Date.now();
+      st.settings.hideGlobal = true; // жюри не попадает в общий рейтинг учеников
+    });
+    try { sessionStorage.setItem('nasstudy.admin', '1'); } catch { /* приватный режим */ }
+    const cb = A.after; A.after = null;
+    closeModal();
+    toast(t(cloud || isLoggedIn() ? 'jury.welcome' : 'jury.welcomeLocal'));
+    rerender();
+    if (cb) cb(true);
+  });
+  document.addEventListener('nas:jury', () => { const b = document.createElement('button'); b.dataset.act = 'jury-login'; b.hidden = true; document.body.appendChild(b); b.click(); b.remove(); });
+  action('jury-exit', async () => {
+    if (!confirm(t('jury.exitConfirm'))) return;
+    if (isLoggedIn()) await signOut();
+    try { sessionStorage.removeItem('nasstudy.admin'); } catch { /* память */ }
+    resetAll();
+    location.hash = '#/';
+    rerender();
+  });
   action('auth-google', () => googleSignIn());
   action('auth-submit', async (_d, form) => {
     if (A.busy) return;
