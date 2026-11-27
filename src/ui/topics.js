@@ -15,7 +15,39 @@ export const GLYPH = {
 };
 /** Номер урока внутри своего класса: 01, 02… — минималистично и без формул. */
 const NUM = (() => { const m = {}; const c = {}; TOPICS.forEach((tp) => { c[tp.grade] = (c[tp.grade] || 0) + 1; m[tp.id] = c[tp.grade]; }); return m; })();
-export const glyphTile = (tp, cls = '') => `<span class="glyph num g-${tp.subject} ${cls}" aria-hidden="true"><b>${String(NUM[tp.id] || 0).padStart(2, '0')}</b></span>`;
+/* Плитка темы: у алгебры — формула темы, у геометрии и чтения — свой рисунок.
+   Маленький номер урока в углу. Так тему узнаёшь с первого взгляда. */
+const T_FORMULA = {
+  'a7.powers': 'aⁿ', 'a7.poly': 'x²+x', 'a7.fsu': '(a+b)²', 'a7.linear': 'ax=b', 'a7.linfunc': 'y=kx', 'a7.stats': 'Σ',
+  'a8.roots': '√x', 'a8.quadratic': 'ax²', 'a8.quadfunc': 'y=x²', 'a9.ineq': 'x>a', 'a9.prog': 'aₙ', 'a9.prob': 'P(A)',
+};
+const S = (d) => `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">${d}</svg>`;
+const L = (d, w = 1.8, o = 1) => `<path d="${d}" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" opacity="${o}"/>`;
+const T_ART = {
+  'g7.triangles': S(`<path d="M12 3.5 21 19.5H3z" opacity=".28"/>${L('M12 3.5 21 19.5H3z')}<circle cx="12" cy="3.5" r="1.7"/><circle cx="21" cy="19.5" r="1.7"/><circle cx="3" cy="19.5" r="1.7"/>`),
+  'g7.parallel': S(`${L('M2.5 8h19M2.5 16h19', 2.2)}${L('M8 21.5 16 2.5', 1.6, .55)}<circle cx="13.2" cy="8" r="1.6"/><circle cx="9.8" cy="16" r="1.6"/>`),
+  'g8.pyth': S(`<path d="M4 20V9l11 11z" opacity=".3"/>${L('M4 20V9l11 11H4z')}${L('M4 16.6h3.4V20', 1.4)}${L('M4 9l5.5-5.5 11 11L15 20', 1.4, .5)}`),
+  'g8.quads': S(`<path d="M7.5 5H21l-4.5 14H3z" opacity=".28"/>${L('M7.5 5H21l-4.5 14H3z')}${L('M7.5 5 16.5 19', 1.3, .5)}`),
+  'g8.trig': S(`${L('M3 20h18M3 20 18.5 5.5', 2)}${L('M10.5 20a7.5 7.5 0 0 0-2.1-5.2', 1.6)}${L('M18.5 5.5V20', 1.4, .5)}<rect x="15.6" y="17.1" width="2.9" height="2.9" opacity=".6"/>`),
+  'g9.vectors': S(`${L('M4 19.5 18.5 5', 2.2)}${L('M11.5 5h7v7', 2.2)}${L('M4 19.5h11', 1.6, .45)}<circle cx="4" cy="19.5" r="1.8"/>`),
+  'g9.similar': S(`<path d="M2 20 9 7.5 16 20z" opacity=".28"/>${L('M2 20 9 7.5 16 20z', 1.7)}<path d="M15.5 20 19 14l3.5 6z"/>`),
+  'g9.circle': S(`<circle cx="12" cy="12" r="9" opacity=".22"/>${L('M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z')}${L('M12 12l6.4-6.4', 1.8)}<circle cx="12" cy="12" r="1.9"/>`),
+  'r.mainidea': S(`<rect x="3" y="3.5" width="18" height="17" rx="3.5" opacity=".22"/>${L('M6.5 8h11M6.5 16.5h7.5', 1.6, .55)}<rect x="5.5" y="10.4" width="13" height="3.6" rx="1.4"/>`),
+  'r.findinfo': S(`${L('M3 6h12M3 10h8M3 14h5', 1.6, .5)}<circle cx="15.5" cy="14" r="4.6" opacity=".25"/>${L('M20.1 14a4.6 4.6 0 1 1-9.2 0 4.6 4.6 0 0 1 9.2 0z', 1.8)}${L('M19 17.6l3 3', 2.4)}`),
+  'r.texttypes': S(`<rect x="8.5" y="2.5" width="13" height="15" rx="2.8" opacity=".3"/><rect x="2.5" y="6.5" width="13" height="15" rx="2.8"/><path d="M5.5 11.5h7M5.5 15h4.5" stroke="var(--glyph-bg, #fff)" stroke-width="1.6" stroke-linecap="round"/>`),
+  'r.vocab': S(`<path d="M4 3.5h16a2 2 0 0 1 2 2v9.5a2 2 0 0 1-2 2h-8l-5 4v-4H4a2 2 0 0 1-2-2V5.5a2 2 0 0 1 2-2z" opacity=".28"/><text x="12" y="13.6" text-anchor="middle" font-size="9" font-weight="800" font-family="Georgia, serif" font-style="italic">Aa</text>`),
+  'r.styles': S(`<path d="M14 2.5l7.5 7.5-8.8 8.8L4.5 21.5l2.7-8.2z" opacity=".28"/>${L('M14 2.5l7.5 7.5-8.8 8.8L4.5 21.5l2.7-8.2z', 1.7)}<circle cx="12.6" cy="11.4" r="1.9"/>${L('M4.5 21.5l6.6-6.6', 1.4)}`),
+  'r.factopinion': S(`<rect x="2" y="4.5" width="10" height="10" rx="3"/><path d="m4.6 9.6 1.8 1.8 3.3-3.6" fill="none" stroke="var(--glyph-bg, #fff)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M14 7h8v8.5h-3.5L15.5 19v-3.5H14z" opacity=".35"/>`),
+  'r.charts': S(`<rect x="3" y="12" width="4.2" height="9" rx="1.3" opacity=".45"/><rect x="9.9" y="7" width="4.2" height="14" rx="1.3"/><rect x="16.8" y="3" width="4.2" height="18" rx="1.3" opacity=".7"/>`),
+  'r.inference': S(`<path d="M12 2.5a6.6 6.6 0 0 0-3.9 11.9c.7.5 1.1 1.3 1.2 2.1h5.4c.1-.8.5-1.6 1.2-2.1A6.6 6.6 0 0 0 12 2.5z" opacity=".32"/>${L('M9.6 19h4.8M10.4 21.8h3.2', 1.9)}${L('M12 6.2v5.4m0 0-2.2-2.2m2.2 2.2 2.2-2.2', 1.7)}`),
+};
+export const glyphTile = (tp, cls = '') => {
+  const n = String(NUM[tp.id] || 0).padStart(2, '0');
+  const f = T_FORMULA[tp.id];
+  const art = T_ART[tp.id];
+  const inner = f ? `<b class="g-f ${f.length > 4 ? 'long' : ''}">${f}</b>` : art ? `<span class="g-art">${art}</span>` : `<b>${n}</b>`;
+  return `<span class="glyph num g-${tp.subject} ${cls}" aria-hidden="true">${inner}<i class="g-n">${n}</i></span>`;
+};
 
 /** Сплошные «живые» иконки предметов вместо стандартных контурных. */
 const SUBJ_SVG = {

@@ -212,8 +212,8 @@ function upcoming() {
 }
 
 // Итог ответа: «печать» с галочкой / крестиком (двухцветная, как иконки меню)
-const ACT_OK = '<svg class="act-svg" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" opacity=".22" d="M12 2.2l2.3 1.7 2.8-.2 1 2.6 2.5 1.3-.4 2.8 1.5 2.4-1.5 2.4.4 2.8-2.5 1.3-1 2.6-2.8-.2L12 21.8l-2.3-1.7-2.8.2-1-2.6-2.5-1.3.4-2.8L2.3 12l1.5-2.4-.4-2.8 2.5-1.3 1-2.6 2.8.2z"/><path d="m8 12.4 2.7 2.7L16.2 9.3" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-const ACT_BAD = '<svg class="act-svg" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="7" fill="currentColor" opacity=".2"/><path d="M9 9l6 6M15 9l-6 6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>';
+const ACT_OK = '<svg class="act-svg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="currentColor" opacity=".16"/><circle cx="12" cy="12" r="8" fill="currentColor"/><path d="m8.3 12.3 2.5 2.5 5-5.2" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const ACT_BAD = '<svg class="act-svg" viewBox="0 0 24 24" aria-hidden="true"><rect x="1" y="1" width="22" height="22" rx="8" fill="currentColor" opacity=".16"/><rect x="4" y="4" width="16" height="16" rx="6" fill="currentColor"/><path d="m9.3 9.3 5.4 5.4m0-5.4-5.4 5.4" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/></svg>';
 
 /** При каждом заходе на главную: кольца наполняются, столбики растут, проценты «досчитываются». */
 export function animateDashboard(root = document) {

@@ -1651,3 +1651,19 @@ html[data-motion='off'] .ca, html[data-motion='off'] .ca::after { animation: non
 @keyframes flameGlow { from { box-shadow: 0 0 0 0 rgba(255, 138, 61, .0), 0 6px 18px -6px rgba(255, 122, 61, .6); } to { box-shadow: 0 0 0 6px rgba(255, 138, 61, .18), 0 10px 28px -4px rgba(255, 122, 61, .75); } }
 .ps-flame .fl, .ft-fire .fl { filter: drop-shadow(0 0 4px rgba(255, 230, 160, .8)); }
 .streak-pill .fl { filter: drop-shadow(0 0 3px rgba(255, 122, 61, .45)); }
+
+/* ─── Плитки тем: формула или рисунок вместо голого номера ────────────── */
+.glyph { --glyph-bg: var(--app); }
+.g-algebra { --glyph-bg: var(--mint); } .g-geometry { --glyph-bg: var(--sky); } .g-reading { --glyph-bg: var(--cream); }
+.glyph .g-f { font-family: 'Iowan Old Style', 'Palatino Linotype', Georgia, 'Times New Roman', serif; font-style: italic; font-weight: 700; font-size: 25px; letter-spacing: -.01em; line-height: 1; position: relative; z-index: 1; }
+.glyph .g-f.long { font-size: 17px; }
+.glyph.lg .g-f { font-size: 36px; } .glyph.lg .g-f.long { font-size: 24px; }
+.glyph .g-art { width: 32px; height: 32px; display: block; position: relative; z-index: 1; }
+.glyph .g-art svg { width: 100%; height: 100%; display: block; overflow: visible; }
+.glyph.lg .g-art { width: 46px; height: 46px; }
+.glyph .g-n { position: absolute; right: 7px; bottom: 5px; font-style: normal; font-size: 10px; font-weight: 800; letter-spacing: .02em; opacity: .55; margin: 0; font-variant-numeric: tabular-nums; }
+.glyph .g-n::after { content: none !important; }
+.glyph.lg .g-n { right: 10px; bottom: 8px; font-size: 12px; }
+/* Лёгкое оживление при наведении на карточку темы */
+.tc:hover .glyph .g-art, .tc:hover .glyph .g-f, .rec-row:hover .glyph .g-art, a:hover > .glyph .g-art { transform: rotate(-6deg) scale(1.08); }
+.glyph .g-art, .glyph .g-f { transition: transform .35s cubic-bezier(.34, 1.56, .64, 1); }
