@@ -24,6 +24,8 @@ import { registerLeagueActions } from './ui/league.js';
 import { initLevels } from './ui/levels.js';
 import { renderSettings, registerSettingsActions, afterSettings } from './ui/settings.js';
 import { applyPrefs } from './prefs.js';
+import { initTracking, track, cleanPath, checkOwner } from './cloud/track.js';
+import { renderOwner, registerOwnerActions } from './ui/owner.js';
 
 const main = document.getElementById('main');
 const rail = document.getElementById('rail');
@@ -54,6 +56,7 @@ function view(path, params) {
     case 'wallet': return renderWallet();
     case 'profile': return renderProfile();
     case 'settings': return renderSettings();
+    case 'owner': return renderOwner(params);
     case 'admin': return renderAdmin();
     case 'tutor':
       if (params.get('ask')) seedTutorQuestion(params.get('ask'), true);
@@ -90,7 +93,7 @@ function render() {
     const el = document.getElementById(keepId);
     if (el) { el.focus(); if (caret !== null && el.setSelectionRange) try { el.setSelectionRange(caret, caret); } catch { /* не текстовое поле */ } }
   }
-  if (path !== lastPath) { window.scrollTo({ top: 0 }); requestAnimationFrame(() => animateCharts()); lastPath = path; }
+  if (path !== lastPath) { window.scrollTo({ top: 0 }); requestAnimationFrame(() => animateCharts()); track('page', cleanPath(path)); lastPath = path; }
   if (path.startsWith('/pisa')) animatePisa();
   if (path.startsWith('/settings')) afterSettings();
   if (path.startsWith('/tutor')) flushPending(render);
@@ -121,6 +124,7 @@ registerAuthActions(render);
 registerFriendsActions(render);
 registerLeagueActions(render);
 registerSettingsActions(render);
+registerOwnerActions(render);
 applyPrefs();
 initLevels();
 registerOnboardingActions(action, render);
@@ -157,14 +161,17 @@ render();
 if (!getProfile().onboarded) showOnboarding(render);
 else maybeWhatsNew(render);
 // Аккаунт: загружаем настройки Supabase и сессию, при входе/выходе перерисовываем
+initTracking();
 initAuth().then(() => {
+  checkOwner().then((ok) => { globalThis.__nasOwner = ok; if (ok) render(); });
+  track('page', cleanPath(parseHash().path)); // первая страница: до загрузки настроек облака её ещё некуда было записать
   // Вернулись от Google: закрываем анкету (профиль пришёл из облака) и сообщаем результат
   const r = takeOAuthResult();
   if (r === 'ok') { if (getProfile().onboarded) closeModal(); toast(t('auth.loggedIn')); }
   if (r === 'error') toast(t('auth.errGoogle'));
   render();
 });
-onAuthChange(() => render());
+onAuthChange(() => { render(); checkOwner().then((ok) => { if (globalThis.__nasOwner !== ok) { globalThis.__nasOwner = ok; render(); } }); });
 // Значок новых сообщений от друзей: проверяем раз в 30 секунд
 setInterval(refreshUnread, 30000);
 setTimeout(refreshUnread, 2500);

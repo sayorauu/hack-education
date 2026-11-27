@@ -1758,3 +1758,36 @@ html[data-motion='off'] .ca, html[data-motion='off'] .ca::after { animation: non
 .ob-jury { margin-top: 18px; }
 .account.jury .acc-ic { background: #FFF1C9; color: #B07D12; }
 [data-theme='dark'] .account.jury .acc-ic { background: #3A2C0A; color: #FBD46B; }
+
+/* ─── Главный админ ───────────────────────────────────────────────────── */
+.own-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; }
+.own-live { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--dim); }
+.own-live i { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 0 0 rgba(34, 197, 94, .6); animation: ownPulse 1.8s infinite; }
+@keyframes ownPulse { 70% { box-shadow: 0 0 0 8px rgba(34, 197, 94, 0); } 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); } }
+.own-kpis { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; margin-bottom: 18px; }
+.own-kpi { display: grid; gap: 4px; padding: 16px 18px; border-radius: 22px; }
+.own-kpi-ic { width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; background: var(--app); margin-bottom: 4px; }
+.own-kpi b { font-size: 28px; font-weight: 750; letter-spacing: -.02em; color: var(--text); }
+.own-kpi small { font-size: 12.5px; color: var(--dim); }
+.own-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.own-days { display: flex; align-items: flex-end; gap: 6px; height: 150px; padding-top: 6px; }
+.own-day { flex: 1; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 6px; }
+.own-day i { width: 100%; max-width: 26px; border-radius: 7px; background: linear-gradient(180deg, #8a7cf0, var(--accent)); }
+.own-day em { font-style: normal; font-size: 11px; color: var(--dim); }
+.own-split { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.own-role { font-size: 12.5px; padding: 5px 10px; border-radius: 9px; background: var(--soft); color: var(--dim); }
+.own-role b { color: var(--text); }
+.own-role.r-jury { background: #FFF1C9; color: #8A5A00; }
+.own-bars { display: grid; gap: 10px; }
+.own-bar { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) 44px; gap: 10px; align-items: center; font-size: 13.5px; }
+.own-bar span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.own-bar b { text-align: right; font-variant-numeric: tabular-nums; }
+.own-feed { display: grid; gap: 2px; max-height: 420px; overflow: auto; }
+.own-ev { display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 8px 4px; border-top: 1px solid var(--line); }
+.own-ev:first-child { border-top: 0; }
+.own-ev-ic { width: 28px; height: 28px; border-radius: 9px; display: grid; place-items: center; background: var(--soft); color: var(--accent); }
+.own-ev.k-visit .own-ev-ic { color: var(--ok); } .own-ev.k-action .own-ev-ic { color: #E0712B; }
+.own-ev-main { display: grid; min-width: 0; } .own-ev-main b { font-size: 13.5px; } .own-ev-main small { font-size: 12px; color: var(--dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.own-ev time { font-size: 11.5px; color: var(--dim); white-space: nowrap; }
+.own-note { margin-top: 18px; font-size: 12.5px; display: flex; gap: 6px; }
+@media (max-width: 1100px) { .own-kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); } .own-grid { grid-template-columns: 1fr; } }

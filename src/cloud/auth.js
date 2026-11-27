@@ -265,6 +265,9 @@ export const hasState = () => Boolean(getState());
 /* ─── Для друзей и сообщений ──────────────────────────────────────────── */
 
 export const myId = () => session?.user?.id || null;
+/** Для статистики: адрес базы и свежий токен (или null у гостя). */
+export const cloudConfig = () => cfg || {};
+export const accessToken = () => token();
 
 /** Полное удаление своего аккаунта в облаке (функция delete_my_account в account.sql). */
 export async function deleteAccount() {

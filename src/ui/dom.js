@@ -40,6 +40,8 @@ export function md(text) {
 
 /** Делегирование кликов по data-act — один слушатель на всё приложение. */
 const handlers = new Map();
+import { track } from '../cloud/track.js';
+
 export function action(name, fn) { handlers.set(name, fn); }
 
 export function initDelegation(root) {
@@ -54,13 +56,13 @@ export function initDelegation(root) {
        её отправляет. */
     if (el.tagName === 'FORM') return;
     const fn = handlers.get(el.dataset.act);
-    if (fn) { e.preventDefault(); fn(el.dataset, el, e); }
+    if (fn) { track('action', el.dataset.act); e.preventDefault(); fn(el.dataset, el, e); }
   });
   root.addEventListener('submit', (e) => {
     const el = e.target.closest('[data-act]');
     if (!el) return;
     const fn = handlers.get(el.dataset.act);
-    if (fn) { e.preventDefault(); fn(el.dataset, el, e); }
+    if (fn) { track('action', el.dataset.act); e.preventDefault(); fn(el.dataset, el, e); }
   });
 }
 

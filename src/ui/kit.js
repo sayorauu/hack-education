@@ -24,6 +24,7 @@ const NAV = [
   { path: '/friends', icon: 'users', key: 'nav.friends', extra: true },
   { path: '/profile', icon: 'user', key: 'nav.profile' },
   { path: '/settings', icon: 'settings', key: 'nav.settings', extra: true },
+  { path: '/owner', icon: 'shield', key: 'nav.owner', extra: true, owner: true },
 ];
 
 /* Двухтоновые иконки меню: основа полупрозрачная, деталь сплошная */
@@ -70,7 +71,7 @@ export function renderRail(path) {
       <a class="rail-logo" href="#/" aria-label="NASstudy">${kapiSvg()}</a>
       <span class="rail-brand">NASstudy</span>
     </div>
-    ${NAV.map((n) => `<a class="nav ${active(n) ? 'on' : ''} ${n.extra ? 'nav-extra' : ''}" href="#${n.path}" data-tip="${esc(t(n.key))}" aria-label="${esc(t(n.key))}"${active(n) ? ' aria-current="page"' : ''}>${navIcon(n.icon)}<span class="nav-lbl">${esc(t(n.key === 'nav.tutor' ? 'nav.tutorShort' : n.key))}</span></a>`).join('')}
+    ${NAV.filter((n) => !n.owner || globalThis.__nasOwner).map((n) => `<a class="nav ${active(n) ? 'on' : ''} ${n.extra ? 'nav-extra' : ''}" href="#${n.path}" data-tip="${esc(t(n.key))}" aria-label="${esc(t(n.key))}"${active(n) ? ' aria-current="page"' : ''}>${navIcon(n.icon)}<span class="nav-lbl">${esc(t(n.key === 'nav.tutor' ? 'nav.tutorShort' : n.key))}</span></a>`).join('')}
     <div class="rail-spacer"></div>
     <button class="nav rail-toggle" data-act="rail-toggle" aria-expanded="${open}" data-tip="${esc(t('rail.expand'))}" aria-label="${esc(t(open ? 'rail.collapse' : 'rail.expand'))}"><span class="rt-ic">${icon('chevL', 20)}</span><span class="nav-lbl">${esc(t('rail.collapse'))}</span></button>
     <a class="rail-user" href="#/profile" aria-label="${esc(t('nav.profile'))}">

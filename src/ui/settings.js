@@ -114,6 +114,7 @@ export function renderSettings() {
 
       ${card('privacy', `
         ${sw('hideGlobal', t('set.hideGlobal'), t('set.hideGlobalB'))}
+        ${sw('analytics', t('set.analytics'), t('set.analyticsB'))}
         <p class="note set-note">${icon('users', 13)} ${t('set.privacyNote')}</p>`)}
 
       ${card('data', `
