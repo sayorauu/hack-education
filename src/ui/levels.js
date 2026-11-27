@@ -4,6 +4,7 @@
  * На 10-м уровне — приз 10 000 монет (выдаёт state.js, один раз).
  */
 
+import { play } from '../sound.js';
 import { icon } from './icons.js';
 import { t, tf } from '../i18n.js';
 import { getProfile, update, subscribe, levelInfo, LEVELS, LEVEL_MAX_PRIZE } from '../state.js';
@@ -95,6 +96,7 @@ function checkLevelUp() {
   showing = true;
   const tr = TIER[L.lvl - 1];
   update((s) => { s.profile.levelSeen = L.lvl; });
+  play('levelUp');
   openModal(`<div class="lvl-up ${L.max ? 'goat' : ''}" style="--lh:${tr.h}">
       <span class="lvl-up-burst">${rankSvg(L.lvl)}<b>${L.lvl}</b></span>
       <small>${t('lvl.upKicker')}</small>

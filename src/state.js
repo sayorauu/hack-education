@@ -48,6 +48,7 @@ const emptyProfile = () => ({
   levelSeen: 1,          // какой уровень уже поздравили
   maxLevelPaid: false,   // приз за 10-й уровень выдан
   newsSeen: 0,           // какую версию «Что нового» уже видел
+  goalDoneOn: null,      // день, когда цель дня уже отпраздновали
   league: null,          // очки недельной лиги друзей, см. LEAGUE
 });
 
@@ -161,6 +162,15 @@ const defaultState = () => ({
     theme: matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light',
     aiMode: 'auto',
     localModel: 'lite',
+    sound: { on: true, vol: 0.6, answers: true, progress: true, notify: true },
+    fontSize: 'm',         // s | m | l | xl — размер текста
+    motion: 'on',          // on | off — анимации
+    dailyGoal: 5,          // верных ответов в день
+    wordTap: true,         // «нажми на слово — Капи объяснит»
+    pisaClock: false,      // секундомер в PISA по умолчанию
+    notifyBrowser: false,  // системные уведомления о сообщениях
+    hideGlobal: false,     // не показывать меня в общем рейтинге
+    autoNext: false,       // после верного ответа сразу к следующему заданию
   },
 });
 
@@ -184,7 +194,7 @@ function load() {
       const profile = { ...d.profile, ...raw.profile };
       profile.coins = Math.min(COINS.maxBalance, Math.max(0, Number(profile.coins) || 0)); // старые балансы выше потолка
       seedLife(profile);
-      return { profile, settings: { ...d.settings, ...raw.settings } };
+      return { profile, settings: { ...d.settings, ...raw.settings, sound: { ...d.settings.sound, ...(raw.settings?.sound || {}) } } };
     }
   } catch (e) {
     console.warn('NASstudy: состояние не прочитано, начинаем заново', e);

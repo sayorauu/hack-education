@@ -6,7 +6,8 @@ import { initDelegation, action, toast } from './ui/dom.js';
 import { getProfile, getSettings, update } from './state.js';
 import { t } from './i18n.js';
 import { renderRail, switchTheme, switchLang, closeModal } from './ui/kit.js';
-import { renderDashboard, registerDashboardActions, animateDashboard } from './ui/dashboard.js';
+import { renderDashboard, registerDashboardActions } from './ui/dashboard.js';
+import { animateCharts } from './ui/charts.js';
 import { renderTopics, renderTopic, bindTopicSearch } from './ui/topics.js';
 import { renderPractice, registerPracticeActions } from './ui/practice.js';
 import { renderLeaderboard, registerLeaderboardActions } from './ui/leaderboard.js';
@@ -21,6 +22,8 @@ import { canUse, openAuth, registerAuthActions } from './ui/auth.js';
 import { renderFriends, registerFriendsActions, refreshUnread, paintBadge } from './ui/friends.js';
 import { registerLeagueActions } from './ui/league.js';
 import { initLevels } from './ui/levels.js';
+import { renderSettings, registerSettingsActions, afterSettings } from './ui/settings.js';
+import { applyPrefs } from './prefs.js';
 
 const main = document.getElementById('main');
 const rail = document.getElementById('rail');
@@ -50,6 +53,7 @@ function view(path, params) {
     case 'pisa': return renderPisa();
     case 'wallet': return renderWallet();
     case 'profile': return renderProfile();
+    case 'settings': return renderSettings();
     case 'admin': return renderAdmin();
     case 'tutor':
       if (params.get('ask')) seedTutorQuestion(params.get('ask'), true);
@@ -86,8 +90,9 @@ function render() {
     const el = document.getElementById(keepId);
     if (el) { el.focus(); if (caret !== null && el.setSelectionRange) try { el.setSelectionRange(caret, caret); } catch { /* не текстовое поле */ } }
   }
-  if (path !== lastPath) { window.scrollTo({ top: 0 }); if (path === '/' || path === '') requestAnimationFrame(() => animateDashboard()); lastPath = path; }
+  if (path !== lastPath) { window.scrollTo({ top: 0 }); requestAnimationFrame(() => animateCharts()); lastPath = path; }
   if (path.startsWith('/pisa')) animatePisa();
+  if (path.startsWith('/settings')) afterSettings();
   if (path.startsWith('/tutor')) flushPending(render);
 }
 
@@ -115,6 +120,8 @@ registerProfileActions(render);
 registerAuthActions(render);
 registerFriendsActions(render);
 registerLeagueActions(render);
+registerSettingsActions(render);
+applyPrefs();
 initLevels();
 registerOnboardingActions(action, render);
 registerAdminActions(render);

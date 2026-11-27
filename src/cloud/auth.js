@@ -12,7 +12,7 @@
  * кэшируются, чтобы вход работал и после перезапуска без сети.
  */
 
-import { getState, getProfile, replaceProfile, subscribe, leagueView, qualifiedDays, recentMisses, levelInfo } from '../state.js';
+import { getState, getProfile, getSettings, replaceProfile, subscribe, leagueView, qualifiedDays, recentMisses, levelInfo } from '../state.js';
 
 const CFG_KEY = 'nasstudy.cloud';
 const SES_KEY = 'nasstudy.session';
@@ -270,6 +270,7 @@ export function publicStats(p = getProfile()) {
   const L = leagueView(p);
   return {
     lvl: levelInfo(p).lvl, // уровень (статус)
+    hidden: Boolean(getSettings().hideGlobal), // не показывать в общем рейтинге
     week: L.week, wpts: L.pts, pw: L.prevWeek, ppts: L.prevPts, // лига недели
     qd: qualifiedDays(p),  // «засчитанные» дни — для общей серии
     miss: recentMisses(p), // где ошибся — друзья могут объяснить

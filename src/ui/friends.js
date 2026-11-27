@@ -8,6 +8,8 @@
  * так проще и надёжнее на слабом интернете).
  */
 
+import { play } from '../sound.js';
+import { systemNotify } from '../prefs.js';
 import { icon } from './icons.js';
 import { t, tf, fmtDate, loc } from '../i18n.js';
 import { getProfile, masteryOf } from '../state.js';
@@ -24,6 +26,7 @@ const F = { card: null, list: null, err: '', loading: false, loadedAt: 0, addMsg
 let rerenderRef = () => {};
 let pollTimer = null;
 let unreadTotal = 0;
+let unreadSeenOnce = false; // первый подсчёт после загрузки — без звука
 
 const ava = (card, size = 46) => photoAva(card, size);
 
@@ -97,7 +100,10 @@ export async function refreshUnread() {
   try {
     creditThanks();
     const u = await unreadCounts();
+    const prev = unreadTotal;
     unreadTotal = Object.values(u).reduce((a, b) => a + b, 0);
+    if (unreadSeenOnce && unreadTotal > prev) { play('message'); systemNotify(t('set.notifyTitle'), tf('set.notifyBody', { n: unreadTotal })); }
+    unreadSeenOnce = true;
     paintBadge();
   } catch { /* таблиц нет — значка не будет */ }
 }

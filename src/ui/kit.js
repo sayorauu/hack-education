@@ -23,10 +23,12 @@ const NAV = [
   { path: '/wallet', icon: 'wallet', key: 'nav.wallet', extra: true },
   { path: '/friends', icon: 'users', key: 'nav.friends', extra: true },
   { path: '/profile', icon: 'user', key: 'nav.profile' },
+  { path: '/settings', icon: 'settings', key: 'nav.settings', extra: true },
 ];
 
 /* Двухтоновые иконки меню: основа полупрозрачная, деталь сплошная */
 const NAV_SVG = {
+  settings: '<path opacity=".35" d="M10.3 2.5h3.4l.6 2.6 1.9.8 2.3-1.4 2.4 2.4-1.4 2.3.8 1.9 2.6.6v3.4l-2.6.6-.8 1.9 1.4 2.3-2.4 2.4-2.3-1.4-1.9.8-.6 2.6h-3.4l-.6-2.6-1.9-.8-2.3 1.4-2.4-2.4 1.4-2.3-.8-1.9-2.6-.6v-3.4l2.6-.6.8-1.9-1.4-2.3 2.4-2.4 2.3 1.4 1.9-.8z"/><circle cx="12" cy="12" r="3.6"/>',
   home: '<path opacity=".35" d="M3 10.6 12 3.2l9 7.4V20a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 20z"/><rect x="9" y="13.2" width="6" height="8.3" rx="1.6"/>',
   book: '<path opacity=".35" d="M2.5 5.2C5.6 4 8.7 4.2 11.2 6v14c-2.5-1.6-5.6-1.8-8.7-.7z"/><path d="M21.5 5.2C18.4 4 15.3 4.2 12.8 6v14c2.5-1.6 5.6-1.8 8.7-.7z"/>',
   chat: '<path opacity=".35" d="M12 3c5.2 0 9.5 3.6 9.5 8s-4.3 8-9.5 8c-1.1 0-2.2-.2-3.2-.5L4 20.5l1.3-4A7.6 7.6 0 0 1 2.5 11C2.5 6.6 6.8 3 12 3z"/><circle cx="8" cy="11" r="1.5"/><circle cx="12" cy="11" r="1.5"/><circle cx="16" cy="11" r="1.5"/>',

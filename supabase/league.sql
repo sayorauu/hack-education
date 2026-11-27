@@ -23,6 +23,7 @@ language sql stable security definer set search_path = public as $$
            when stats->>'pw'   = wk then coalesce((stats->>'ppts')::int, 0)
            else 0 end as pts
     from users_public
+    where coalesce(stats->>'hidden', 'false') <> 'true' -- ученик скрыл себя в настройках
   ) s
   where pts > 0
   order by pts desc
@@ -39,6 +40,7 @@ language sql stable security definer set search_path = public as $$
            when stats->>'pw'   = wk then coalesce((stats->>'ppts')::int, 0)
            else 0 end as pts
     from users_public
+    where coalesce(stats->>'hidden', 'false') <> 'true' -- ученик скрыл себя в настройках
   ), r as (select id, pts, rank() over (order by pts desc) as place from s where pts > 0)
   select (select place from r where id = auth.uid()),
          (select count(*) from r),

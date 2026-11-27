@@ -1,6 +1,8 @@
 import { icon } from './icons.js';
+import { play } from '../sound.js';
+import { checkDailyGoal } from '../prefs.js';
 import { t, tf, loc } from '../i18n.js';
-import { getProfile, recordAttempt, awardCoins, COINS } from '../state.js';
+import { getProfile, getSettings, recordAttempt, awardCoins, COINS } from '../state.js';
 import { TOPIC_BY_ID, ITEMS_BY_TOPIC, PASSAGES, TOPICS } from '../data/curriculum.js';
 import { header, esc, coinBurst, subjName, openModal, closeModal } from './kit.js';
 import { action, toast } from './dom.js';
@@ -19,8 +21,8 @@ export function passageHtml(key) {
   const body = ps.table
     ? `<table class="ptable"><thead><tr>${ps.table.head.map((h) => `<th>${esc(loc(h))}</th>`).join('')}</tr></thead>
         <tbody>${ps.table.rows.map((r) => `<tr>${r.map((c) => `<td>${esc(loc(c))}</td>`).join('')}</tr>`).join('')}</tbody></table>`
-    : `<p class="pw-text">${wordSpans(loc(ps.text), key)}</p>`;
-  const tip = ps.table ? '' : `<p class="pw-tip">${icon('hint', 14)} ${t('word.tip')}</p>`;
+    : `<p class="pw-text">${getSettings().wordTap === false ? esc(loc(ps.text)) : wordSpans(loc(ps.text), key)}</p>`;
+  const tip = ps.table || getSettings().wordTap === false ? '' : `<p class="pw-tip">${icon('hint', 14)} ${t('word.tip')}</p>`;
   return `<aside class="passage"><p class="note" style="margin-bottom:6px">${t('pr.text')}</p><h3>${esc(loc(ps.title))}</h3>${body}${tip}</aside>`;
 }
 
@@ -151,7 +153,11 @@ export function registerPracticeActions(rerender) {
     S.results[S.idx] = correct;
     S.revealed = true;
     S.coins += r.coins + r.streakBonus;
+    play(correct ? 'correct' : 'wrong');
+    if (correct) checkDailyGoal();
     rerender();
+    // Настройка «сразу к следующему»: после верного ответа листаем сами
+    if (correct && getSettings().autoNext) { const at = S.idx; setTimeout(() => { if (S && S.revealed && S.idx === at) document.querySelector('[data-act="pr-next"]')?.click(); }, 1400); }
     if (r.coins) coinBurst(document.querySelector('.fb') || el, r.coins);
     if (r.streakBonus) setTimeout(() => toast(tf('pr.streakBonus', { n: r.streakBonus })), 500);
   });
@@ -159,6 +165,7 @@ export function registerPracticeActions(rerender) {
     if (!S) return;
     if (S.idx + 1 >= S.items.length) {
       S.done = true;
+      play('lesson');
       // Бонус за тему — не чаще раза в день на одну тему
       const today = new Date().toDateString();
       const already = getProfile().coinLog.some((l) => l.reason === 'topic' && l.topic === S.topicId && new Date(l.ts).toDateString() === today);

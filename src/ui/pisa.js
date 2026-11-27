@@ -1,6 +1,7 @@
 import { icon } from './icons.js';
+import { play } from '../sound.js';
 import { t, tf, loc, fmtDate } from '../i18n.js';
-import { getProfile, recordPisa, COINS } from '../state.js';
+import { getProfile, getSettings, update, recordPisa, COINS } from '../state.js';
 import { PISA_ITEMS, PISA_STIMULI, PISA_AVG, scorePisa } from '../data/pisa.js';
 import { header, esc, coinBurst, openModal, closeModal, kapiSvg } from './kit.js';
 import { action } from './dom.js';
@@ -14,8 +15,7 @@ let rerenderRef = () => {};
    экран. Секундомер включается по желанию (по умолчанию скрыт, чтобы не
    давил). Выйти можно кнопкой «Выйти» или клавишей Esc — с подтверждением,
    ответы не сохраняются. */
-const SW_KEY = 'nasstudy.pisaClock';
-let clockOn = localStorage.getItem(SW_KEY) === '1';
+let clockOn = Boolean(getSettings().pisaClock);
 let clockTimer = null;
 let wantFs = false; // ученик в полноэкранном режиме (или хотел в него)
 const RECOMMENDED_MIN = () => Math.round(PISA_ITEMS.length * 1.5);
@@ -203,6 +203,7 @@ export function registerPisaActions(rerender) {
   // Перед тестом — короткая загрузка (~2,6 с): ученик успевает настроиться
   action('pisa-start', () => {
     if (P.phase === 'loading') return;
+    clockOn = Boolean(getSettings().pisaClock);
     if (!requireAuth('auth.rPisa')) return;
     enterFs(); // нужен клик ученика — поэтому здесь, а не после загрузки
     P = { phase: 'loading', idx: 0, answers: {}, result: null, t0: 0 };
@@ -217,13 +218,14 @@ export function registerPisaActions(rerender) {
   });
   action('pisa-pick', ({ i }) => { P.answers[PISA_ITEMS[P.idx].id] = Number(i); rerender(); });
   action('pisa-nav', ({ d }) => { P.idx = Math.max(0, Math.min(PISA_ITEMS.length - 1, P.idx + Number(d))); rerender(); window.scrollTo({ top: 0, behavior: 'smooth' }); });
-  action('pisa-clock', () => { clockOn = !clockOn; localStorage.setItem(SW_KEY, clockOn ? '1' : '0'); rerender(); });
+  action('pisa-clock', () => { clockOn = !clockOn; update((s) => { s.settings.pisaClock = clockOn; }); rerender(); });
   action('pisa-fs', () => { if (fsEl()) exitFs(); else enterFs(); setTimeout(rerender, 250); });
   action('pisa-exit', () => confirmLeavePisa('#/pisa'));
   action('pisa-finish', () => {
     P.result = scorePisa(P.answers);
     P.phase = 'result';
     recordPisa({ ...P.result, answers: { ...P.answers } });
+    play('lesson');
     rerender();
     window.scrollTo({ top: 0 });
     coinBurst(document.getElementById('coinCount'), COINS.pisaDone);

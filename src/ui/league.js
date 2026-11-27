@@ -13,6 +13,8 @@
  * Плюс туториал «Как это работает» при первом заходе в «Друзья».
  */
 
+import { play } from '../sound.js';
+import { checkDailyGoal } from '../prefs.js';
 import { icon } from './icons.js';
 import { t, tf, loc } from '../i18n.js';
 import { getProfile, update, levelInfo, leagueView, LEAGUE, daysLeftInWeek, qualifiedDays, todayNeed, dayKey, setLeague, addLeaguePoints, awardCoins, recordAttempt } from '../state.js';
@@ -109,7 +111,7 @@ function claimPrevWeek(friends) {
     if (res.rank <= 3) res.coins = awardCoins(LEAGUE.rewards[res.rank - 1], 'league');
   }
   setLeague((L) => { L.claimed = v.prevWeek; if (res.rank) L.last = res; });
-  if (res.coins) setTimeout(() => toast(tf('lg.rewardToast', { r: res.rank, n: res.coins })), 400);
+  if (res.coins) setTimeout(() => { play('achievement'); toast(tf('lg.rewardToast', { r: res.rank, n: res.coins })); }, 400);
 }
 
 const MEDAL = ['gold', 'silver', 'bronze'];
@@ -253,7 +255,7 @@ async function claimGlobalPrize() {
     const win = rows.length >= 2 && rows[0].id === myId() && rows[1].place > 1; // чистая победа, минимум 2 участника
     const coins = win ? awardCoins(LEAGUE.globalPrize, 'leagueTop') : 0;
     setLeague((L) => { L.claimedGlobal = v.prevWeek; if (win) L.lastGlobal = { week: v.prevWeek, coins }; });
-    if (coins) setTimeout(() => toast(tf('gl.wonToast', { n: coins })), 600);
+    if (coins) setTimeout(() => { play('achievement'); toast(tf('gl.wonToast', { n: coins })); }, 600);
   } catch { /* попробуем при следующем заходе */ }
 }
 
@@ -415,6 +417,7 @@ export async function creditThanks() {
     for (const r of rows) { const k = String(r.payload?.explain || 'm' + r.id); if (!got.has(k)) { got.add(k); fresh.push(k); } }
     if (!fresh.length) return;
     setLeague((L) => { L.credited = [...(L.credited || []), ...fresh].slice(-300); L.pts = (L.pts || 0) + fresh.length * LEAGUE.helpGiver; });
+    play('achievement');
     toast(tf('ex.credited', { n: fresh.length * LEAGUE.helpGiver }));
   } catch { /* нет сети или таблиц */ }
 }
@@ -528,7 +531,9 @@ export function registerLeagueActions(rerender) {
     recordAttempt({ item: it, subject: TOPIC_BY_ID[it.topic].subject, correct, hints: 0, ms: Date.now() - EX.t0 });
     EX.revealed = true;
     exPaint();
+    play(correct ? 'correct' : 'wrong');
     if (!correct) return;
+    checkDailyGoal();
     const { msgId, from, orig } = EX;
     addLeaguePoints(LEAGUE.helpLearner);
     setLeague((L) => { L.tried = [...(L.tried || []), msgId].slice(-200); });

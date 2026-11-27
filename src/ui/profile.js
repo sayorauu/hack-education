@@ -2,7 +2,7 @@ import { icon } from './icons.js';
 import { t, tf, LANGS } from '../i18n.js';
 import { getProfile, getSettings, update, resetAll } from '../state.js';
 import { GRADES } from '../data/curriculum.js';
-import { header, esc, openModal, closeModal, switchLang, switchTheme, fmt, coin, photoAva, safePhoto } from './kit.js';
+import { header, esc, openModal, closeModal, switchLang, switchTheme, fmt, coin, photoAva, safePhoto, navIcon } from './kit.js';
 import { pushPublicCard, isLoggedIn } from '../cloud/auth.js';
 import { action, toast } from './dom.js';
 import { accountPanel } from './auth.js';
@@ -18,6 +18,7 @@ export function renderProfile() {
     <nav class="menu-links mobile-only">
       <a href="#/leaderboard"><span class="ml-ic t-sky">${icon('trophy', 20)}</span><b>${t('nav.leaderboard')}</b>${icon('chevR', 18)}</a>
       <a href="#/friends"><span class="ml-ic t-lilac">${icon('users', 20)}</span><b>${t('nav.friends')}</b>${icon('chevR', 18)}</a>
+      <a href="#/settings"><span class="ml-ic t-mint">${icon('settings', 20)}</span><b>${t('nav.settings')}</b>${icon('chevR', 18)}</a>
       <a href="#/wallet"><span class="ml-ic t-cream">${coin(24)}</span><b>${t('nav.wallet')}</b><span class="ml-val">${fmt(p.coins)}</span>${icon('chevR', 18)}</a>
     </nav>
     <div class="wallet">
@@ -39,15 +40,14 @@ export function renderProfile() {
           <div class="chips">${GRADES.map((g) => `<label class="chip ${p.grade === g ? 'on' : ''}"><input type="radio" name="grade" value="${g}" ${p.grade === g ? 'checked' : ''} hidden>${tf('common.grade', { n: g })}</label>`).join('')}</div></div>
         <button class="btn" style="margin-top:22px" type="submit">${icon('check', 16)} ${t('common.save')}</button>
       </form>
-      <section class="panel">
-        <div class="field" style="margin-top:0"><label>${t('profile.lang')}</label>
-          <div class="chips">${LANGS.map((l) => `<button class="chip ${s.lang === l.id ? 'on' : ''}" data-act="lang" data-id="${l.id}">${l.label}</button>`).join('')}</div></div>
-        <div class="field"><label>${t('profile.theme')}</label>
-          <div class="chips"><button class="chip ${s.theme === 'light' ? 'on' : ''}" data-act="theme-set" data-id="light">${icon('sun', 15)} ${t('profile.light')}</button>
-          <button class="chip ${s.theme === 'dark' ? 'on' : ''}" data-act="theme-set" data-id="dark">${icon('moon', 15)} ${t('profile.dark')}</button></div></div>
-        <p class="note" style="margin-top:20px">${icon('shield', 14)} ${t('profile.keyNote')}</p>
-        <button class="btn btn-soft" style="margin-top:20px" data-act="tour-again">${icon('play', 15)} ${t('profile.tour')}</button>
-        <button class="btn btn-soft" style="margin-top:20px;color:var(--bad)" data-act="profile-reset">${t('profile.reset')}</button>
+      <section class="panel pf-set">
+        <a class="pf-set-link" href="#/settings"><span class="set-ic t-lilac">${navIcon('settings')}</span><span><b>${t('nav.settings')}</b><small>${t('set.linkB')}</small></span>${icon('chevR', 18)}</a>
+        <div class="pf-set-quick">
+          <button class="chip ${s.theme === 'light' ? 'on' : ''}" data-act="theme-set" data-id="light">${icon('sun', 15)} ${t('profile.light')}</button>
+          <button class="chip ${s.theme === 'dark' ? 'on' : ''}" data-act="theme-set" data-id="dark">${icon('moon', 15)} ${t('profile.dark')}</button>
+          ${LANGS.map((l) => `<button class="chip ${s.lang === l.id ? 'on' : ''}" data-act="lang" data-id="${l.id}">${l.label}</button>`).join('')}
+        </div>
+        <p class="note" style="margin-top:16px">${icon('shield', 14)} ${t('profile.keyNote')}</p>
         <a class="admin-link" href="#/admin">${icon('shield', 14)} ${t('admin.title')}</a>
       </section>
     </div>`;

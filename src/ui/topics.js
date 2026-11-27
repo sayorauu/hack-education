@@ -141,7 +141,7 @@ export function renderTopic(id) {
       <aside style="display:grid;gap:22px">
         <section class="pc pc-subj t-${sb.tint}" style="width:auto;height:auto;gap:8px">
           <div class="top-row"><span class="sic">${icon(sb.icon, 22)}</span><span class="num">${tf('dash.tasks', { n: items.length })}</span></div>
-          <h3>${t('topic.mastery')}: ${m}%</h3>
+          <h3>${t('topic.mastery')}: <span data-count>${m}%</span></h3>
           <div class="pct">${tf('topic.done', { c: st.correct, n: st.attempts })}</div>
           <div class="pie" style="--p:${Math.max(4, m)};margin-top:14px"></div>
         </section>
